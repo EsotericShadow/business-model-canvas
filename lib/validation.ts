@@ -51,21 +51,22 @@ export function validateCanvasData(data: any): ValidationResult {
   const errors: ValidationError[] = []
   const sanitizedData: any = {}
 
-  // Required fields validation
+  // Required fields validation (using snake_case as sent from frontend)
   const requiredFields = [
-    'keyPartners', 'keyActivities', 'valuePropositions',
-    'customerRelationships', 'customerSegments', 'keyResources',
-    'channels', 'costStructure', 'revenueStreams'
+    'key_partners', 'key_activities', 'value_propositions',
+    'customer_relationships', 'customer_segments', 'key_resources',
+    'channels', 'cost_structure', 'revenue_streams'
   ]
 
   for (const field of requiredFields) {
-    if (!data[field] || typeof data[field] !== 'string') {
+    // Allow empty strings but require string type
+    if (data[field] === undefined || data[field] === null || typeof data[field] !== 'string') {
       errors.push({
         field,
         message: `${field} is required and must be a string`
       })
     } else {
-      // Sanitize the input
+      // Sanitize the input (allow empty strings)
       sanitizedData[field] = sanitizeText(data[field])
       
       // Check length limits
