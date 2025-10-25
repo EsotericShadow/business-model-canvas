@@ -1,5 +1,8 @@
 import React from 'react'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
