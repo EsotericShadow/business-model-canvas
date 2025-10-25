@@ -212,6 +212,7 @@ export default function BusinessModelCanvas() {
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="business-model-canvas">
+          {/* Standard Business Model Canvas Order */}
           <CanvasSection
             title="Key Partners"
             content={canvasData.keyPartners}
