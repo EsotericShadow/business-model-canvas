@@ -9,6 +9,7 @@ import { ExportMenu } from '@/components/ExportMenu'
 import { VersionHistory } from '@/components/VersionHistory'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Toast } from '@/components/Toast'
+import { MobileNavigation } from '@/components/MobileNavigation'
 import { getUserCanvas, saveCanvas, createOrUpdateUser, CanvasData } from '@/lib/actions'
 
 interface CanvasDataState {
@@ -47,6 +48,33 @@ export default function BusinessModelCanvas() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [currentCanvasId, setCurrentCanvasId] = useState<string | null>(null)
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([])
+  const [currentSection, setCurrentSection] = useState<string>('')
+
+  // Mobile navigation sections
+  const mobileSections = [
+    { id: 'key-partners', title: 'Key Partners', icon: '🤝', description: 'Who are your key partners?' },
+    { id: 'key-activities', title: 'Key Activities', icon: '⚡', description: 'What key activities do you perform?' },
+    { id: 'key-resources', title: 'Key Resources', icon: '💎', description: 'What key resources do you need?' },
+    { id: 'value-propositions', title: 'Value Propositions', icon: '💡', description: 'What value do you deliver?' },
+    { id: 'customer-relationships', title: 'Customer Relationships', icon: '❤️', description: 'How do you interact with customers?' },
+    { id: 'channels', title: 'Channels', icon: '📢', description: 'How do you reach customers?' },
+    { id: 'customer-segments', title: 'Customer Segments', icon: '👥', description: 'Who are your customers?' },
+    { id: 'cost-structure', title: 'Cost Structure', icon: '💰', description: 'What are your major costs?' },
+    { id: 'revenue-streams', title: 'Revenue Streams', icon: '💵', description: 'How do you make money?' }
+  ]
+
+  // Scroll to section function for mobile navigation
+  const scrollToSection = useCallback((sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      })
+      setCurrentSection(sectionId)
+    }
+  }, [])
 
   // Load user authentication status
   useEffect(() => {
@@ -277,6 +305,13 @@ export default function BusinessModelCanvas() {
       </header>
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Mobile Navigation */}
+        <MobileNavigation 
+          sections={mobileSections}
+          onSectionClick={scrollToSection}
+          currentSection={currentSection}
+        />
+        
         <div className="business-model-canvas">
           {/* 5x3 Matrix Layout - Exact Match */}
           <CanvasSection
@@ -284,54 +319,63 @@ export default function BusinessModelCanvas() {
             content={canvasData.keyPartners}
             onUpdate={(value) => updateCanvasData('keyPartners', value)}
             className="key-partners"
+            id="key-partners"
           />
           <CanvasSection
             title="Key Activities"
             content={canvasData.keyActivities}
             onUpdate={(value) => updateCanvasData('keyActivities', value)}
             className="key-activities"
+            id="key-activities"
           />
           <CanvasSection
             title="Value Propositions"
             content={canvasData.valuePropositions}
             onUpdate={(value) => updateCanvasData('valuePropositions', value)}
             className="value-propositions"
+            id="value-propositions"
           />
           <CanvasSection
             title="Customer Relationships"
             content={canvasData.customerRelationships}
             onUpdate={(value) => updateCanvasData('customerRelationships', value)}
             className="customer-relationships"
+            id="customer-relationships"
           />
           <CanvasSection
             title="Customer Segments"
             content={canvasData.customerSegments}
             onUpdate={(value) => updateCanvasData('customerSegments', value)}
             className="customer-segments"
+            id="customer-segments"
           />
           <CanvasSection
             title="Key Resources"
             content={canvasData.keyResources}
             onUpdate={(value) => updateCanvasData('keyResources', value)}
             className="key-resources"
+            id="key-resources"
           />
           <CanvasSection
             title="Channels"
             content={canvasData.channels}
             onUpdate={(value) => updateCanvasData('channels', value)}
             className="channels"
+            id="channels"
           />
           <CanvasSection
             title="Cost Structure"
             content={canvasData.costStructure}
             onUpdate={(value) => updateCanvasData('costStructure', value)}
             className="cost-structure"
+            id="cost-structure"
           />
           <CanvasSection
             title="Revenue Streams"
             content={canvasData.revenueStreams}
             onUpdate={(value) => updateCanvasData('revenueStreams', value)}
             className="revenue-streams"
+            id="revenue-streams"
           />
         </div>
           </main>
