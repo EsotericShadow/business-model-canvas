@@ -119,9 +119,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       if (response.ok) {
         setError('')
         setNeedsVerification(false)
-        // Automatically sign in after verification
+        // Show success message and auto-sign in
+        setError('✅ Email verified! Please sign in with your password.')
         setIsSignUp(false)
-        setPassword('') // Clear password for sign in
+        // Keep the email but clear password for fresh sign-in
+        setPassword('')
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Verification failed')
