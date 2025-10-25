@@ -22,7 +22,16 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return await bcrypt.compare(password, hash)
+  try {
+    if (!password || !hash || typeof password !== 'string' || typeof hash !== 'string') {
+      console.error('Invalid password or hash types:', { password: typeof password, hash: typeof hash })
+      return false
+    }
+    return await bcrypt.compare(password, hash)
+  } catch (error) {
+    console.error('Error in verifyPassword:', error)
+    return false
+  }
 }
 
 // User management
@@ -149,6 +158,14 @@ export async function authenticateUser(email: string, password: string): Promise
     }
     
     console.log('User found, verifying password...')
+    console.log('Password hash type:', typeof user.password_hash)
+    console.log('Password hash length:', user.password_hash?.length)
+    
+    if (!user.password_hash) {
+      console.error('User has no password hash')
+      return null
+    }
+    
     const isValidPassword = await verifyPassword(password, user.password_hash)
     if (!isValidPassword) {
       console.log('Invalid password for user:', email)
