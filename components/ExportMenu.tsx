@@ -1,7 +1,13 @@
 'use client'
 
-import { useUser, useStackApp } from '@stackframe/stack'
+import { useState, useEffect } from 'react'
 import { exportToJSON, exportToPNG, exportToPDF } from '@/lib/export'
+
+interface User {
+  id: string
+  email: string
+  name?: string
+}
 
 interface ExportMenuProps {
   canvasData: {
@@ -18,13 +24,19 @@ interface ExportMenuProps {
 }
 
 export function ExportMenu({ canvasData }: ExportMenuProps) {
-  const user = useUser()
-  const app = useStackApp()
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    // Check if user is signed in
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => setUser(data.user))
+      .catch(() => setUser(null))
+  }, [])
 
   const handleExportJSON = () => {
     if (!user) {
       alert('Please sign in to export your canvas')
-      app.redirectToSignIn()
       return
     }
     exportToJSON(canvasData)
@@ -33,7 +45,6 @@ export function ExportMenu({ canvasData }: ExportMenuProps) {
   const handleExportPNG = async () => {
     if (!user) {
       alert('Please sign in to export your canvas')
-      app.redirectToSignIn()
       return
     }
     try {
@@ -47,7 +58,6 @@ export function ExportMenu({ canvasData }: ExportMenuProps) {
   const handleExportPDF = async () => {
     if (!user) {
       alert('Please sign in to export your canvas')
-      app.redirectToSignIn()
       return
     }
     try {
