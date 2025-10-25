@@ -123,14 +123,14 @@ export function MobileCanvasOverview({ canvasData, onUpdate }: MobileCanvasOverv
             <button
               key={section.key}
               onClick={() => handleSectionClick(section.key)}
-              className={`p-4 rounded-lg border-2 ${section.color} hover:shadow-md transition-all text-left`}
+              className={`p-4 rounded-lg border-2 ${section.color} hover:shadow-md transition-all text-left bg-white`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-2xl">{section.icon}</span>
-                <h3 className="font-semibold text-gray-900">{section.title}</h3>
+                <h3 className="font-semibold text-black">{section.title}</h3>
               </div>
               <p className="text-sm text-gray-600 mb-2">{section.description}</p>
-              <div className="text-sm text-gray-700 line-clamp-2">
+              <div className="text-sm text-black line-clamp-2">
                 {section.content || `Tap to add ${section.title.toLowerCase()}...`}
               </div>
               {section.content && (

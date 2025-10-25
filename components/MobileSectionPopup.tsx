@@ -72,11 +72,11 @@ export function MobileSectionPopup({
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6 overflow-hidden">
+        <div className="flex-1 p-6 overflow-hidden bg-white">
           <textarea
             value={localContent}
             onChange={(e) => handleContentChange(e.target.value)}
-            className="w-full h-full resize-none border-none outline-none text-base leading-relaxed"
+            className="w-full h-full resize-none border-none outline-none text-base leading-relaxed text-black bg-white"
             placeholder={`Enter your ${title.toLowerCase()}...`}
             autoFocus
             style={{ minHeight: '300px' }}
