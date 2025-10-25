@@ -19,16 +19,19 @@ export function AuthButton() {
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
+        console.log('Auth check response:', data)
         setUser(data.user)
         setIsLoading(false)
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Auth check error:', error)
         setUser(null)
         setIsLoading(false)
       })
   }, [])
 
   const handleSignInSuccess = (userData: User) => {
+    console.log('Sign in success:', userData)
     setUser(userData)
     setShowAuthModal(false)
     window.location.reload() // Refresh to update the page

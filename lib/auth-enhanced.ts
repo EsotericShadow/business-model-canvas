@@ -43,7 +43,7 @@ export async function createUser(email: string, password: string, name?: string)
 
   const id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   const password_hash = await hashPassword(password)
-  const verification_token = crypto.randomBytes(32).toString('hex')
+  const verification_token = generateVerificationToken()
   
   const user: User = {
     id,
@@ -110,7 +110,8 @@ export function deleteSession(sessionId: string): void {
 
 // Email verification
 export function generateVerificationToken(): string {
-  return crypto.randomBytes(32).toString('hex')
+  // Generate a 6-digit verification code
+  return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
 // Initialize Resend (only if API key is available)
