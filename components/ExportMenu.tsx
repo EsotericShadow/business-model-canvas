@@ -1,5 +1,6 @@
 'use client'
 
+import { useUser, useStackApp } from '@stackframe/stack'
 import { exportToJSON, exportToPNG, exportToPDF } from '@/lib/export'
 
 interface ExportMenuProps {
@@ -17,11 +18,24 @@ interface ExportMenuProps {
 }
 
 export function ExportMenu({ canvasData }: ExportMenuProps) {
+  const user = useUser()
+  const app = useStackApp()
+
   const handleExportJSON = () => {
+    if (!user) {
+      alert('Please sign in to export your canvas')
+      app.redirectToSignIn()
+      return
+    }
     exportToJSON(canvasData)
   }
 
   const handleExportPNG = async () => {
+    if (!user) {
+      alert('Please sign in to export your canvas')
+      app.redirectToSignIn()
+      return
+    }
     try {
       await exportToPNG()
     } catch (error) {
@@ -31,6 +45,11 @@ export function ExportMenu({ canvasData }: ExportMenuProps) {
   }
 
   const handleExportPDF = async () => {
+    if (!user) {
+      alert('Please sign in to export your canvas')
+      app.redirectToSignIn()
+      return
+    }
     try {
       await exportToPDF()
     } catch (error) {

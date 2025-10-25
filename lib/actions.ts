@@ -44,6 +44,16 @@ export async function getUserCanvas(userId: string) {
       throw new Error('Invalid user ID format')
     }
 
+    // Handle demo user - return template canvas
+    if (userId === 'demo') {
+      const template = await sql`
+        SELECT * FROM business_model_canvas 
+        WHERE share_token = 'demo-canvas'
+        LIMIT 1
+      ` as any[]
+      return template[0] || null
+    }
+
     // First, try to get user's existing canvas
     let result = await sql`
       SELECT * FROM business_model_canvas 
