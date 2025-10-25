@@ -17,6 +17,7 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [name, setName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -40,6 +41,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters long')
+      return
+    }
+
+    if (isSignUp && password !== confirmPassword) {
+      setError('Passwords do not match')
       return
     }
 
@@ -131,6 +137,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const resetForm = () => {
     setEmail('')
     setPassword('')
+    setConfirmPassword('')
     setName('')
     setError('')
     setNeedsVerification(false)
@@ -275,6 +282,28 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 Password must be at least 8 characters long
               </p>
             </div>
+
+            {isSignUp && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Confirm your password"
+                  required
+                  disabled={isLoading}
+                  minLength={8}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Passwords must match
+                </p>
+              </div>
+            )}
 
             {isSignUp && (
               <div>
