@@ -44,13 +44,13 @@ export default function BusinessModelCanvas() {
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([])
 
   // Toast notification functions
-  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     const id = Math.random().toString(36).substr(2, 9)
     setToasts(prev => [...prev, { id, message, type }])
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id))
     }, 5000)
-  }
+  }, [])
 
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
@@ -122,38 +122,36 @@ export default function BusinessModelCanvas() {
 
   // Auto-save with debouncing
   const debouncedSave = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout
-      return (data: CanvasDataState) => {
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(async () => {
-          if (user) {
-            try {
-              setIsSaving(true)
-              await saveCanvas(user.id, {
-                key_partners: data.keyPartners,
-                key_activities: data.keyActivities,
-                value_propositions: data.valuePropositions,
-                customer_relationships: data.customerRelationships,
-                customer_segments: data.customerSegments,
-                key_resources: data.keyResources,
-                channels: data.channels,
-                cost_structure: data.costStructure,
-                revenue_streams: data.revenueStreams
-              })
-              setLastSaved(new Date())
-              showToast('Canvas saved successfully!', 'success')
-            } catch (error) {
-              console.error('Error saving canvas:', error)
-              showToast('Failed to save canvas. Please try again.', 'error')
-            } finally {
-              setIsSaving(false)
-            }
-          }
-        }, 2000) // 2 second debounce
-      }
-    })(),
-    [user]
+    (data: CanvasDataState) => {
+      if (!user) return
+      
+      const timeoutId = setTimeout(async () => {
+        try {
+          setIsSaving(true)
+          await saveCanvas(user.id, {
+            key_partners: data.keyPartners,
+            key_activities: data.keyActivities,
+            value_propositions: data.valuePropositions,
+            customer_relationships: data.customerRelationships,
+            customer_segments: data.customerSegments,
+            key_resources: data.keyResources,
+            channels: data.channels,
+            cost_structure: data.costStructure,
+            revenue_streams: data.revenueStreams
+          })
+          setLastSaved(new Date())
+          showToast('Canvas saved successfully!', 'success')
+        } catch (error) {
+          console.error('Error saving canvas:', error)
+          showToast('Failed to save canvas. Please try again.', 'error')
+        } finally {
+          setIsSaving(false)
+        }
+      }, 2000) // 2 second debounce
+      
+      return () => clearTimeout(timeoutId)
+    },
+    [user, showToast]
   )
 
   const updateCanvasData = (section: keyof CanvasDataState, value: string) => {
