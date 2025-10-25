@@ -5,9 +5,7 @@ const nextConfig = {
     unoptimized: true
   },
   // Ensure proper server-side rendering for authentication
-  experimental: {
-    serverComponentsExternalPackages: ['@neondatabase/serverless']
-  }
+  serverExternalPackages: ['@neondatabase/serverless']
 }
 
 module.exports = nextConfig
