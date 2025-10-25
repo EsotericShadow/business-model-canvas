@@ -89,9 +89,9 @@ export async function getUserById(id: string): Promise<User | null> {
       SELECT id, email, name, password_hash, email_verified, verification_token, created_at, updated_at
       FROM users 
       WHERE id = ${id}
-    `
+    ` as any[]
     
-    if (result.length === 0) return null
+    if (!result || result.length === 0) return null
     
     const row = result[0]
     return {
@@ -116,9 +116,9 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       SELECT id, email, name, password_hash, email_verified, verification_token, created_at, updated_at
       FROM users 
       WHERE email = ${email.toLowerCase().trim()}
-    `
+    ` as any[]
     
-    if (result.length === 0) return null
+    if (!result || result.length === 0) return null
     
     const row = result[0]
     return {

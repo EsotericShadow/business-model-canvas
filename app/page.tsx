@@ -10,6 +10,7 @@ import { VersionHistory } from '@/components/VersionHistory'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Toast } from '@/components/Toast'
 import { MobileNavigation } from '@/components/MobileNavigation'
+import { MobileCanvasOverview } from '@/components/MobileCanvasOverview'
 import { getUserCanvas, saveCanvas, createOrUpdateUser, CanvasData } from '@/lib/actions'
 
 interface CanvasDataState {
@@ -305,80 +306,89 @@ export default function BusinessModelCanvas() {
       </header>
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        {/* Mobile Navigation */}
-        <MobileNavigation 
-          sections={mobileSections}
-          onSectionClick={scrollToSection}
-          currentSection={currentSection}
+        {/* Mobile Canvas Overview - Only on Mobile */}
+        <MobileCanvasOverview 
+          canvasData={canvasData}
+          onUpdate={updateCanvasData}
         />
         
-        <div className="business-model-canvas">
-          {/* 5x3 Matrix Layout - Exact Match */}
-          <CanvasSection
-            title="Key Partners"
-            content={canvasData.keyPartners}
-            onUpdate={(value) => updateCanvasData('keyPartners', value)}
-            className="key-partners"
-            id="key-partners"
+        {/* Desktop Canvas Grid - Hidden on Mobile */}
+        <div className="hidden md:block">
+          {/* Mobile Navigation */}
+          <MobileNavigation 
+            sections={mobileSections}
+            onSectionClick={scrollToSection}
+            currentSection={currentSection}
           />
-          <CanvasSection
-            title="Key Activities"
-            content={canvasData.keyActivities}
-            onUpdate={(value) => updateCanvasData('keyActivities', value)}
-            className="key-activities"
-            id="key-activities"
-          />
-          <CanvasSection
-            title="Value Propositions"
-            content={canvasData.valuePropositions}
-            onUpdate={(value) => updateCanvasData('valuePropositions', value)}
-            className="value-propositions"
-            id="value-propositions"
-          />
-          <CanvasSection
-            title="Customer Relationships"
-            content={canvasData.customerRelationships}
-            onUpdate={(value) => updateCanvasData('customerRelationships', value)}
-            className="customer-relationships"
-            id="customer-relationships"
-          />
-          <CanvasSection
-            title="Customer Segments"
-            content={canvasData.customerSegments}
-            onUpdate={(value) => updateCanvasData('customerSegments', value)}
-            className="customer-segments"
-            id="customer-segments"
-          />
-          <CanvasSection
-            title="Key Resources"
-            content={canvasData.keyResources}
-            onUpdate={(value) => updateCanvasData('keyResources', value)}
-            className="key-resources"
-            id="key-resources"
-          />
-          <CanvasSection
-            title="Channels"
-            content={canvasData.channels}
-            onUpdate={(value) => updateCanvasData('channels', value)}
-            className="channels"
-            id="channels"
-          />
-          <CanvasSection
-            title="Cost Structure"
-            content={canvasData.costStructure}
-            onUpdate={(value) => updateCanvasData('costStructure', value)}
-            className="cost-structure"
-            id="cost-structure"
-          />
-          <CanvasSection
-            title="Revenue Streams"
-            content={canvasData.revenueStreams}
-            onUpdate={(value) => updateCanvasData('revenueStreams', value)}
-            className="revenue-streams"
-            id="revenue-streams"
-          />
+          
+          <div className="business-model-canvas">
+            {/* 5x3 Matrix Layout - Exact Match */}
+            <CanvasSection
+              title="Key Partners"
+              content={canvasData.keyPartners}
+              onUpdate={(value) => updateCanvasData('keyPartners', value)}
+              className="key-partners"
+              id="key-partners"
+            />
+            <CanvasSection
+              title="Key Activities"
+              content={canvasData.keyActivities}
+              onUpdate={(value) => updateCanvasData('keyActivities', value)}
+              className="key-activities"
+              id="key-activities"
+            />
+            <CanvasSection
+              title="Value Propositions"
+              content={canvasData.valuePropositions}
+              onUpdate={(value) => updateCanvasData('valuePropositions', value)}
+              className="value-propositions"
+              id="value-propositions"
+            />
+            <CanvasSection
+              title="Customer Relationships"
+              content={canvasData.customerRelationships}
+              onUpdate={(value) => updateCanvasData('customerRelationships', value)}
+              className="customer-relationships"
+              id="customer-relationships"
+            />
+            <CanvasSection
+              title="Customer Segments"
+              content={canvasData.customerSegments}
+              onUpdate={(value) => updateCanvasData('customerSegments', value)}
+              className="customer-segments"
+              id="customer-segments"
+            />
+            <CanvasSection
+              title="Key Resources"
+              content={canvasData.keyResources}
+              onUpdate={(value) => updateCanvasData('keyResources', value)}
+              className="key-resources"
+              id="key-resources"
+            />
+            <CanvasSection
+              title="Channels"
+              content={canvasData.channels}
+              onUpdate={(value) => updateCanvasData('channels', value)}
+              className="channels"
+              id="channels"
+            />
+            <CanvasSection
+              title="Cost Structure"
+              content={canvasData.costStructure}
+              onUpdate={(value) => updateCanvasData('costStructure', value)}
+              className="cost-structure"
+              id="cost-structure"
+            />
+            <CanvasSection
+              title="Revenue Streams"
+              content={canvasData.revenueStreams}
+              onUpdate={(value) => updateCanvasData('revenueStreams', value)}
+              className="revenue-streams"
+              id="revenue-streams"
+            />
+          </div>
         </div>
-          </main>
+      </main>
 
           <footer className="bg-white border-t mt-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
