@@ -1,6 +1,7 @@
 // Enhanced authentication system with passwords and email verification
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import { Resend } from 'resend'
 
 export interface User {
   id: string
@@ -56,6 +57,15 @@ export async function createUser(email: string, password: string, name?: string)
   }
   
   users.set(id, user)
+  
+  // Send verification email
+  try {
+    await sendVerificationEmail(user.email, verification_token, user.name)
+  } catch (error) {
+    console.error('Failed to send verification email:', error)
+    // Don't throw here - user is created, just email failed
+  }
+  
   return user
 }
 
@@ -101,6 +111,57 @@ export function deleteSession(sessionId: string): void {
 // Email verification
 export function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex')
+}
+
+// Initialize Resend (only if API key is available)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+
+// Send verification email using Resend
+export async function sendVerificationEmail(email: string, token: string, name?: string): Promise<void> {
+  if (!resend) {
+    console.log(`--- EMAIL VERIFICATION (Development) ---`)
+    console.log(`To: ${email}`)
+    console.log(`Subject: Verify your email for Business Model Canvas`)
+    console.log(`Token: ${token}`)
+    console.log(`----------------------------------------`)
+    return
+  }
+
+  try {
+    await resend.emails.send({
+      from: 'gabriel@evergreenwebsolutions.ca',
+      to: [email],
+      subject: 'Verify your email for Business Model Canvas',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #2563eb;">Welcome to Business Model Canvas!</h2>
+          <p>Hi ${name || 'there'},</p>
+          <p>Thank you for signing up for our Business Model Canvas tool. To complete your registration, please verify your email address.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Your Verification Token:</h3>
+            <p style="font-family: monospace; font-size: 18px; font-weight: bold; color: #2563eb; background-color: white; padding: 10px; border-radius: 4px; text-align: center; letter-spacing: 2px;">${token}</p>
+          </div>
+          
+          <p>Enter this token in the verification form to activate your account.</p>
+          
+          <p style="color: #6b7280; font-size: 14px;">
+            If you didn't create an account with us, please ignore this email.
+          </p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 12px;">
+            This email was sent from Evergreen Web Solutions<br>
+            Business Model Canvas Tool
+          </p>
+        </div>
+      `
+    })
+    console.log(`✅ Verification email sent to ${email}`)
+  } catch (error) {
+    console.error('❌ Failed to send verification email:', error)
+    throw new Error('Failed to send verification email')
+  }
 }
 
 export function verifyEmailToken(userId: string, token: string): boolean {
