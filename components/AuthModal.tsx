@@ -332,7 +332,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
               >
-                {isSignUp ? 'Already have an account? Sign In' : 'Don&apos;t have an account? Sign Up'}
+                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
               </button>
             </div>
           )}
