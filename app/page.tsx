@@ -8,6 +8,8 @@ import { CanvasSection } from '@/components/CanvasSection'
 import { AuthButton } from '@/components/AuthButton'
 import { ExportMenu } from '@/components/ExportMenu'
 import { VersionHistory } from '@/components/VersionHistory'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Toast } from '@/components/Toast'
 import { getUserCanvas, saveCanvas, createOrUpdateUser, CanvasData } from '@/lib/actions'
 
 interface CanvasDataState {
@@ -39,6 +41,20 @@ export default function BusinessModelCanvas() {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [currentCanvasId, setCurrentCanvasId] = useState<string | null>(null)
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([])
+
+  // Toast notification functions
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+    const id = Math.random().toString(36).substr(2, 9)
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id))
+    }, 5000)
+  }
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id))
+  }
 
   // Load canvas data when user changes
   useEffect(() => {
@@ -126,8 +142,10 @@ export default function BusinessModelCanvas() {
                 revenue_streams: data.revenueStreams
               })
               setLastSaved(new Date())
+              showToast('Canvas saved successfully!', 'success')
             } catch (error) {
               console.error('Error saving canvas:', error)
+              showToast('Failed to save canvas. Please try again.', 'error')
             } finally {
               setIsSaving(false)
             }
@@ -242,15 +260,25 @@ export default function BusinessModelCanvas() {
             onUpdate={(value) => updateCanvasData('revenueStreams', value)}
           />
         </div>
-      </main>
+          </main>
 
-      <footer className="bg-white border-t mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-gray-500 text-sm">
-            Business Model Canvas Tool
-          </p>
+          <footer className="bg-white border-t mt-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <p className="text-center text-gray-500 text-sm">
+                Business Model Canvas Tool
+              </p>
+            </div>
+          </footer>
+
+          {/* Toast Notifications */}
+          {toasts.map(toast => (
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          ))}
         </div>
-      </footer>
-    </div>
-  )
-}
+      )
+    }
