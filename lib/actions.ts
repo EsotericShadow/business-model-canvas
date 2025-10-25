@@ -1,6 +1,6 @@
 'use server'
 
-import { sql } from './supabase'
+import { sql } from './database'
 
 // Database types
 export interface CanvasData {
