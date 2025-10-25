@@ -1,6 +1,7 @@
 'use server'
 
 import { sql } from './database'
+import { validateCanvasData, validateUserId, validateShareToken, rateLimiter } from './validation'
 
 // Database types
 export interface CanvasData {
@@ -38,6 +39,11 @@ export interface CanvasVersion {
 // Get user's canvas (or create from template)
 export async function getUserCanvas(userId: string) {
   try {
+    // Validate user ID
+    if (!validateUserId(userId)) {
+      throw new Error('Invalid user ID format')
+    }
+
     // First, try to get user's existing canvas
     let result = await sql`
       SELECT * FROM business_model_canvas 
@@ -87,6 +93,22 @@ export async function getUserCanvas(userId: string) {
 // Save canvas and create version history
 export async function saveCanvas(userId: string, canvasData: CanvasData) {
   try {
+    // Rate limiting
+    if (!rateLimiter.isAllowed(userId)) {
+      throw new Error('Too many requests. Please wait before saving again.')
+    }
+
+    // Validate user ID
+    if (!validateUserId(userId)) {
+      throw new Error('Invalid user ID format')
+    }
+
+    // Validate and sanitize canvas data
+    const validation = validateCanvasData(canvasData)
+    if (!validation.isValid) {
+      throw new Error(`Validation failed: ${validation.errors.map(e => e.message).join(', ')}`)
+    }
+
     // Get current canvas
     const currentCanvas = await sql`
       SELECT * FROM business_model_canvas 
