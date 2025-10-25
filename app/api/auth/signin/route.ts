@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createUser, getUserByEmail, createSession } from '@/lib/auth'
+import { authenticateUser, createSession } from '@/lib/auth-enhanced'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, name } = await request.json()
+    const { email, password } = await request.json()
     
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    // Check if user exists, create if not
-    let user = getUserByEmail(email)
+    // Authenticate user
+    const user = await authenticateUser(email, password)
     if (!user) {
-      user = createUser(email, name)
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    }
+
+    // Check if email is verified
+    if (!user.email_verified) {
+      return NextResponse.json({ 
+        error: 'Please verify your email address before signing in',
+        needsVerification: true,
+        userId: user.id
+      }, { status: 403 })
     }
 
     // Create session
