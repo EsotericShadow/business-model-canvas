@@ -1,4 +1,17 @@
 // Input validation and sanitization for production safety
+import DOMPurify from 'dompurify'
+import { JSDOM } from 'jsdom'
+
+// Security headers for production
+export const securityHeaders = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+}
 
 export interface ValidationError {
   field: string
@@ -11,14 +24,24 @@ export interface ValidationResult {
   sanitizedData: any
 }
 
+// Modern XSS protection using DOMPurify (2025 standard)
+const window = new JSDOM('').window
+const purify = DOMPurify(window as any)
+
 // Sanitize text input to prevent XSS
 export function sanitizeText(input: string): string {
   if (typeof input !== 'string') return ''
   
-  return input
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocols
-    .replace(/on\w+=/gi, '') // Remove event handlers
+  // Use DOMPurify for comprehensive XSS protection
+  const sanitized = purify.sanitize(input, {
+    ALLOWED_TAGS: [], // No HTML tags allowed
+    ALLOWED_ATTR: [], // No attributes allowed
+    KEEP_CONTENT: true, // Keep text content
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false
+  })
+  
+  return sanitized
     .trim()
     .substring(0, 10000) // Limit length to prevent DoS
 }
@@ -110,3 +133,32 @@ export class RateLimiter {
 
 // Global rate limiter instance
 export const rateLimiter = new RateLimiter(5, 60000) // 5 requests per minute
+
+// CSRF Protection
+export function generateCSRFToken(): string {
+  return crypto.randomUUID()
+}
+
+export function validateCSRFToken(token: string, sessionToken: string): boolean {
+  return token === sessionToken && token.length > 0
+}
+
+// Enhanced security validation
+export function validateCanvasTitle(title: string): { isValid: boolean; sanitized: string } {
+  if (!title || typeof title !== 'string') {
+    return { isValid: false, sanitized: '' }
+  }
+  
+  if (title.length > 255) {
+    return { isValid: false, sanitized: title.substring(0, 255) }
+  }
+  
+  // Sanitize title using DOMPurify
+  const sanitized = purify.sanitize(title, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    KEEP_CONTENT: true
+  })
+  
+  return { isValid: true, sanitized }
+}
