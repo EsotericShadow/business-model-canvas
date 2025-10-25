@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react'
 
 export function StackAuthProvider({ children }: { children: React.ReactNode }) {
   const [stackApp, setStackApp] = useState<any>(null)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
     // Only initialize on client side
     if (typeof window !== 'undefined') {
       const app = new StackClientApp({
@@ -18,8 +20,9 @@ export function StackAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  if (!stackApp) {
-    return <>{children}</>
+  // Don't render until client-side and stackApp is ready
+  if (!isClient || !stackApp) {
+    return <div>Loading...</div>
   }
 
   return (
