@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove static export configuration for server-side rendering
+  // Server-side rendering for Stack Auth integration
   images: {
     unoptimized: true
   },
   // Ensure proper server-side rendering for authentication
-  serverExternalPackages: ['@neondatabase/serverless']
+  serverExternalPackages: ['@neondatabase/serverless'],
+  // Disable static export for server-side rendering
+  output: undefined
 }
 
 module.exports = nextConfig
