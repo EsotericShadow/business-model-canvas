@@ -7,6 +7,7 @@ export function AuthButton() {
   const app = useStackApp()
 
   const handleSignIn = () => {
+    // Use Stack Auth's built-in redirect method
     app.redirectToSignIn()
   }
 
