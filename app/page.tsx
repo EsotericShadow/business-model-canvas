@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useUser } from '@stackframe/stack'
 import { CanvasSection } from '@/components/CanvasSection'
 import { AuthButton } from '@/components/AuthButton'
 import { ExportMenu } from '@/components/ExportMenu'
@@ -23,7 +22,6 @@ interface CanvasDataState {
 }
 
 export default function BusinessModelCanvas() {
-  const user = useUser()
   const [canvasData, setCanvasData] = useState<CanvasDataState>({
     keyPartners: '',
     keyActivities: '',
@@ -39,69 +37,45 @@ export default function BusinessModelCanvas() {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [currentCanvasId, setCurrentCanvasId] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
-  // Load canvas data when user changes
   useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Load canvas data when client is ready
+  useEffect(() => {
+    if (!isClient) return
+    
     const loadCanvas = async () => {
-      if (user) {
-        try {
-          setIsLoading(true)
-          // Create or update user in database
-          await createOrUpdateUser({
-            id: user.id,
-            email: user.primaryEmail || '',
-            name: user.displayName || ''
+      try {
+        setIsLoading(true)
+        // Load demo canvas for now
+        const demoCanvas = await getUserCanvas('demo')
+        if (demoCanvas) {
+          setCanvasData({
+            keyPartners: demoCanvas.key_partners || '',
+            keyActivities: demoCanvas.key_activities || '',
+            valuePropositions: demoCanvas.value_propositions || '',
+            customerRelationships: demoCanvas.customer_relationships || '',
+            customerSegments: demoCanvas.customer_segments || '',
+            keyResources: demoCanvas.key_resources || '',
+            channels: demoCanvas.channels || '',
+            costStructure: demoCanvas.cost_structure || '',
+            revenueStreams: demoCanvas.revenue_streams || ''
           })
-          
-          // Load user's canvas
-          const userCanvas = await getUserCanvas(user.id)
-          if (userCanvas) {
-            setCanvasData({
-              keyPartners: userCanvas.key_partners || '',
-              keyActivities: userCanvas.key_activities || '',
-              valuePropositions: userCanvas.value_propositions || '',
-              customerRelationships: userCanvas.customer_relationships || '',
-              customerSegments: userCanvas.customer_segments || '',
-              keyResources: userCanvas.key_resources || '',
-              channels: userCanvas.channels || '',
-              costStructure: userCanvas.cost_structure || '',
-              revenueStreams: userCanvas.revenue_streams || ''
-            })
-            setCurrentCanvasId(userCanvas.id)
-          }
-        } catch (error) {
-          console.error('Error loading canvas:', error)
-        } finally {
-          setIsLoading(false)
+          setCurrentCanvasId(demoCanvas.id)
         }
-      } else {
-        // Load demo canvas for non-authenticated users
-        try {
-          setIsLoading(true)
-          const demoCanvas = await getUserCanvas('demo')
-          if (demoCanvas) {
-            setCanvasData({
-              keyPartners: demoCanvas.key_partners || '',
-              keyActivities: demoCanvas.key_activities || '',
-              valuePropositions: demoCanvas.value_propositions || '',
-              customerRelationships: demoCanvas.customer_relationships || '',
-              customerSegments: demoCanvas.customer_segments || '',
-              keyResources: demoCanvas.key_resources || '',
-              channels: demoCanvas.channels || '',
-              costStructure: demoCanvas.cost_structure || '',
-              revenueStreams: demoCanvas.revenue_streams || ''
-            })
-          }
-        } catch (error) {
-          console.error('Error loading demo canvas:', error)
-        } finally {
-          setIsLoading(false)
-        }
+      } catch (error) {
+        console.error('Error loading demo canvas:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
     loadCanvas()
-  }, [user])
+  }, [isClient])
 
   // Auto-save with debouncing
   const debouncedSave = useCallback(
@@ -145,7 +119,6 @@ export default function BusinessModelCanvas() {
     setCanvasData(newData)
     debouncedSave(newData)
   }
-
 
   if (isLoading) {
     return (
