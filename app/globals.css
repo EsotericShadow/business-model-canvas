@@ -127,76 +127,283 @@ body {
   flex: 1;
 }
 
-/* Mobile Responsive Design */
-@media (max-width: 768px) {
-  .business-model-canvas {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto repeat(9, 1fr) auto;
-    height: auto;
-    min-height: 100vh;
-  }
-  
-  .canvas-section {
-    min-height: 200px;
-  }
-  
-  .canvas-section-title {
-    font-size: 14px;
-    padding: 8px;
-  }
-  
-  .canvas-textarea {
-    font-size: 14px;
-    padding: 8px;
-  }
-  
-  .canvas-content-readonly {
-    font-size: 12px;
-    padding: 8px;
-  }
-  
-  .canvas-header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  
-  .canvas-metadata {
-    flex-direction: column;
-    gap: 5px;
-  }
-}
+/* ========================================
+   RESPONSIVE DESIGN - EXPERT PANEL RECOMMENDATIONS
+   ======================================== */
 
-@media (max-width: 480px) {
+/* Tablet Optimization (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
   .business-model-canvas {
-    gap: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 80vh;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto repeat(4, 1fr) auto;
+    gap: 1px;
   }
   
+  /* Tablet Grid Layout */
+  .key-partners { grid-column: 1; grid-row: 2; }
+  .key-activities { grid-column: 2; grid-row: 2; }
+  .key-resources { grid-column: 3; grid-row: 2; }
+  .value-propositions { grid-column: 1; grid-row: 3; }
+  .customer-relationships { grid-column: 2; grid-row: 3; }
+  .channels { grid-column: 3; grid-row: 3; }
+  .customer-segments { grid-column: 1; grid-row: 4; }
+  .cost-structure { grid-column: 2; grid-row: 4; }
+  .revenue-streams { grid-column: 3; grid-row: 4; }
+  
   .canvas-section {
-    min-height: 150px;
+    min-height: 180px;
+    padding: 12px;
   }
   
   .canvas-section-title {
-    font-size: 12px;
-    padding: 6px;
+    font-size: 13px;
+    padding: 8px 0;
   }
   
   .canvas-textarea {
     font-size: 12px;
-    padding: 6px;
+    padding: 8px;
+    min-height: 120px;
   }
   
   .canvas-content-readonly {
     font-size: 11px;
-    padding: 6px;
+    padding: 8px;
+    min-height: 120px;
+  }
+}
+
+/* Mobile Landscape (481px - 768px) */
+@media (max-width: 768px) and (min-width: 481px) {
+  .business-model-canvas {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto repeat(5, 1fr) auto;
+    height: auto;
+    min-height: 100vh;
+    gap: 1px;
+  }
+  
+  /* Mobile Landscape Grid Layout */
+  .key-partners { grid-column: 1; grid-row: 2; }
+  .key-activities { grid-column: 2; grid-row: 2; }
+  .key-resources { grid-column: 1; grid-row: 3; }
+  .value-propositions { grid-column: 2; grid-row: 3; }
+  .customer-relationships { grid-column: 1; grid-row: 4; }
+  .channels { grid-column: 2; grid-row: 4; }
+  .customer-segments { grid-column: 1; grid-row: 5; }
+  .cost-structure { grid-column: 2; grid-row: 5; }
+  .revenue-streams { grid-column: 1 / 3; grid-row: 6; }
+  
+  .canvas-section {
+    min-height: 160px;
+    padding: 10px;
+  }
+  
+  .canvas-section-title {
+    font-size: 14px;
+    padding: 6px 0;
+    line-height: 1.3;
+  }
+  
+  .canvas-textarea {
+    font-size: 13px;
+    padding: 8px;
+    min-height: 100px;
+    line-height: 1.4;
+  }
+  
+  .canvas-content-readonly {
+    font-size: 12px;
+    padding: 8px;
+    min-height: 100px;
+    line-height: 1.4;
   }
   
   .canvas-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
     padding: 12px 16px;
   }
   
+  .canvas-metadata {
+    flex-direction: row;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+}
+
+/* Mobile Portrait (up to 480px) */
+@media (max-width: 480px) {
+  .business-model-canvas {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto repeat(9, auto) auto;
+    height: auto;
+    min-height: 100vh;
+    gap: 0;
+    margin: 0;
+    border: none;
+  }
+  
+  /* Mobile Portrait - Stacked Layout */
+  .key-partners { grid-column: 1; grid-row: 2; }
+  .key-activities { grid-column: 1; grid-row: 3; }
+  .key-resources { grid-column: 1; grid-row: 4; }
+  .value-propositions { grid-column: 1; grid-row: 5; }
+  .customer-relationships { grid-column: 1; grid-row: 6; }
+  .channels { grid-column: 1; grid-row: 7; }
+  .customer-segments { grid-column: 1; grid-row: 8; }
+  .cost-structure { grid-column: 1; grid-row: 9; }
+  .revenue-streams { grid-column: 1; grid-row: 10; }
+  
+  .canvas-section {
+    min-height: 200px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    margin-bottom: 1px;
+    background: #fafafa;
+  }
+  
+  .canvas-section-title {
+    font-size: 16px;
+    padding: 8px 0 12px 0;
+    line-height: 1.3;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .canvas-section-subtitle {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  
+  .canvas-textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px;
+    min-height: 120px;
+    line-height: 1.5;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    transition: border-color 0.2s ease;
+  }
+  
+  .canvas-textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .canvas-content-readonly {
+    font-size: 14px;
+    padding: 12px;
+    min-height: 120px;
+    line-height: 1.5;
+    border-radius: 8px;
+    background: white;
+  }
+  
+  .canvas-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+    background: white;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
   .canvas-title {
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+  }
+  
+  .canvas-metadata {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .canvas-metadata input {
+    width: 100%;
+    font-size: 14px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+  }
+  
+  .canvas-footer {
+    padding: 16px;
+    font-size: 12px;
+    text-align: center;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+  }
+}
+
+/* Touch Target Optimization */
+@media (max-width: 768px) {
+  .canvas-textarea {
+    min-height: 44px; /* Minimum touch target */
+    padding: 12px;
+  }
+  
+  .canvas-section-title {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+  }
+  
+  /* Improve touch interactions */
+  .canvas-section {
+    touch-action: manipulation;
+  }
+}
+
+/* High DPI Display Optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .business-model-canvas {
+    border-width: 0.5px;
+  }
+  
+  .canvas-section {
+    border-width: 0.5px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .business-model-canvas {
+    background: #1a1a1a;
+    border-color: #333;
+  }
+  
+  .canvas-section {
+    background: #2a2a2a;
+    border-color: #333;
+    color: #fff;
+  }
+  
+  .canvas-section-title {
+    color: #fff;
+  }
+  
+  .canvas-textarea {
+    background: #333;
+    color: #fff;
+    border-color: #555;
+  }
+  
+  .canvas-content-readonly {
+    background: #333;
+    color: #fff;
+    border-color: #555;
   }
 }
 

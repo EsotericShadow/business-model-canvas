@@ -5,11 +5,12 @@ interface CanvasSectionProps {
   content: string
   onUpdate: (value: string) => void
   className?: string
+  id?: string
 }
 
-export function CanvasSection({ title, content, onUpdate, className }: CanvasSectionProps) {
+export function CanvasSection({ title, content, onUpdate, className, id }: CanvasSectionProps) {
   const isReadOnly = className?.includes('read-only')
-  const sectionId = `canvas-${title.toLowerCase().replace(/\s+/g, '-')}`
+  const sectionId = id || `canvas-${title.toLowerCase().replace(/\s+/g, '-')}`
   
   // Icons for each section matching the standard Business Model Canvas
   const getIcon = (title: string) => {
@@ -29,6 +30,7 @@ export function CanvasSection({ title, content, onUpdate, className }: CanvasSec
   
   return (
     <div 
+      id={sectionId}
       className={`canvas-section ${className || ''}`}
       role="region"
       aria-labelledby={`${sectionId}-title`}
