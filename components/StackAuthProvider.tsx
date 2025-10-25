@@ -15,12 +15,6 @@ export function StackAuthProvider({ children }: { children: React.ReactNode }) {
         projectId: process.env.NEXT_PUBLIC_STACK_PROJECT_ID!,
         publishableClientKey: process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!,
         tokenStore: 'nextjs-cookie',
-        urls: {
-          signIn: '/api/auth/sign-in',
-          signUp: '/api/auth/sign-up',
-          afterSignIn: '/',
-          afterSignUp: '/',
-        }
       })
       setStackApp(app)
     }
