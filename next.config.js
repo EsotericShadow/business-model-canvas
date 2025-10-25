@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  trailingSlash: true,
+  // Remove static export configuration for server-side rendering
   images: {
     unoptimized: true
+  },
+  // Ensure proper server-side rendering for authentication
+  experimental: {
+    serverComponentsExternalPackages: ['@neondatabase/serverless']
   }
 }
 
