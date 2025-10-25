@@ -4,6 +4,17 @@ import { sql } from './database'
 import { validateCanvasData, validateUserId, validateShareToken, rateLimiter } from './validation'
 
 // Database types
+export interface User {
+  id: string
+  email: string
+  name?: string
+  password_hash: string
+  email_verified: boolean
+  verification_token?: string
+  created_at: Date
+  updated_at: Date
+}
+
 export interface CanvasData {
   id?: string
   user_id?: string
