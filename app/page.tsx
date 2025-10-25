@@ -69,6 +69,35 @@ export default function BusinessModelCanvas() {
             name: user.displayName || ''
           })
           
+          // Check if user has demo data in sessionStorage to migrate
+          const demoData = sessionStorage.getItem('demo-canvas-data')
+          if (demoData) {
+            try {
+              const parsedDemoData = JSON.parse(demoData)
+              // Merge demo data with user canvas
+              const userCanvas = await getUserCanvas(user.id)
+              if (userCanvas) {
+                // Update user canvas with demo data
+                await saveCanvas(user.id, {
+                  key_partners: parsedDemoData.keyPartners || userCanvas.key_partners || '',
+                  key_activities: parsedDemoData.keyActivities || userCanvas.key_activities || '',
+                  value_propositions: parsedDemoData.valuePropositions || userCanvas.value_propositions || '',
+                  customer_relationships: parsedDemoData.customerRelationships || userCanvas.customer_relationships || '',
+                  customer_segments: parsedDemoData.customerSegments || userCanvas.customer_segments || '',
+                  key_resources: parsedDemoData.keyResources || userCanvas.key_resources || '',
+                  channels: parsedDemoData.channels || userCanvas.channels || '',
+                  cost_structure: parsedDemoData.costStructure || userCanvas.cost_structure || '',
+                  revenue_streams: parsedDemoData.revenueStreams || userCanvas.revenue_streams || ''
+                })
+                // Clear demo data from sessionStorage
+                sessionStorage.removeItem('demo-canvas-data')
+                showToast('Your demo canvas has been saved to your account!', 'success')
+              }
+            } catch (error) {
+              console.error('Error migrating demo data:', error)
+            }
+          }
+          
           // Load user's canvas
           const userCanvas = await getUserCanvas(user.id)
           if (userCanvas) {
@@ -87,6 +116,7 @@ export default function BusinessModelCanvas() {
           }
         } catch (error) {
           console.error('Error loading canvas:', error)
+          showToast('Failed to load canvas. Please try again.', 'error')
         } finally {
           setIsLoading(false)
         }
@@ -94,23 +124,33 @@ export default function BusinessModelCanvas() {
         // Load demo canvas for non-authenticated users
         try {
           setIsLoading(true)
-          const demoCanvas = await getUserCanvas('demo')
-          if (demoCanvas) {
-            setCanvasData({
-              keyPartners: demoCanvas.key_partners || '',
-              keyActivities: demoCanvas.key_activities || '',
-              valuePropositions: demoCanvas.value_propositions || '',
-              customerRelationships: demoCanvas.customer_relationships || '',
-              customerSegments: demoCanvas.customer_segments || '',
-              keyResources: demoCanvas.key_resources || '',
-              channels: demoCanvas.channels || '',
-              costStructure: demoCanvas.cost_structure || '',
-              revenueStreams: demoCanvas.revenue_streams || ''
-            })
-            setCurrentCanvasId(demoCanvas.id)
+          // Check sessionStorage first
+          const demoData = sessionStorage.getItem('demo-canvas-data')
+          if (demoData) {
+            const parsedData = JSON.parse(demoData)
+            setCanvasData(parsedData)
+            setCurrentCanvasId('demo-session')
+          } else {
+            // Load template canvas
+            const demoCanvas = await getUserCanvas('demo')
+            if (demoCanvas) {
+              setCanvasData({
+                keyPartners: demoCanvas.key_partners || '',
+                keyActivities: demoCanvas.key_activities || '',
+                valuePropositions: demoCanvas.value_propositions || '',
+                customerRelationships: demoCanvas.customer_relationships || '',
+                customerSegments: demoCanvas.customer_segments || '',
+                keyResources: demoCanvas.key_resources || '',
+                channels: demoCanvas.channels || '',
+                costStructure: demoCanvas.cost_structure || '',
+                revenueStreams: demoCanvas.revenue_streams || ''
+              })
+              setCurrentCanvasId(demoCanvas.id)
+            }
           }
         } catch (error) {
           console.error('Error loading demo canvas:', error)
+          showToast('Failed to load demo canvas. Please try again.', 'error')
         } finally {
           setIsLoading(false)
         }
@@ -118,12 +158,21 @@ export default function BusinessModelCanvas() {
     }
 
     loadCanvas()
-  }, [user])
+  }, [user, showToast])
 
   // Auto-save with debouncing
   const debouncedSave = useCallback(
     (data: CanvasDataState) => {
-      if (!user) return
+      if (!user) {
+        // For demo users, save to sessionStorage
+        try {
+          sessionStorage.setItem('demo-canvas-data', JSON.stringify(data))
+          setLastSaved(new Date())
+        } catch (error) {
+          console.error('Error saving demo canvas to sessionStorage:', error)
+        }
+        return
+      }
       
       const timeoutId = setTimeout(async () => {
         try {
@@ -182,14 +231,18 @@ export default function BusinessModelCanvas() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Business Model Canvas</h1>
               <p className="text-gray-600">Plan and visualize your business model</p>
-              {user && (
-                <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-                  {isSaving && <span>💾 Saving...</span>}
-                  {lastSaved && !isSaving && (
-                    <span>✅ Saved {lastSaved.toLocaleTimeString()}</span>
+                  {user ? (
+                    <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                      {isSaving && <span>💾 Saving...</span>}
+                      {lastSaved && !isSaving && (
+                        <span>✅ Saved {lastSaved.toLocaleTimeString()}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-center gap-4 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                      <span>📝 You&apos;re using a demo canvas. Sign up to save your work permanently.</span>
+                    </div>
                   )}
-                </div>
-              )}
             </div>
             <div className="flex items-center gap-3">
               {user && currentCanvasId && (

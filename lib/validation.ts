@@ -88,8 +88,10 @@ export function validateCanvasData(data: any): ValidationResult {
 // Validate user ID format (Stack Auth)
 export function validateUserId(userId: string): boolean {
   if (!userId || typeof userId !== 'string') return false
+  // Allow "demo" user for unauthenticated sessions
+  if (userId === 'demo') return true
+  // Stack Auth user IDs are typically UUIDs or custom formats
   if (userId.length < 5 || userId.length > 200) return false
-  // Stack Auth user IDs can contain various characters
   return /^[a-zA-Z0-9_-]+$/.test(userId)
 }
 
