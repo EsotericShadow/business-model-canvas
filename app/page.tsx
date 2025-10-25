@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useUser } from '@stackframe/stack'
 import { CanvasSection } from '@/components/CanvasSection'
 import { AuthButton } from '@/components/AuthButton'
 import { ExportMenu } from '@/components/ExportMenu'
@@ -24,8 +23,14 @@ interface CanvasDataState {
   revenueStreams: string
 }
 
+interface User {
+  id: string
+  email: string
+  name?: string
+}
+
 export default function BusinessModelCanvas() {
-  const user = useUser()
+  const [user, setUser] = useState<User | null>(null)
   const [canvasData, setCanvasData] = useState<CanvasDataState>({
     keyPartners: '',
     keyActivities: '',
@@ -42,6 +47,14 @@ export default function BusinessModelCanvas() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [currentCanvasId, setCurrentCanvasId] = useState<string | null>(null)
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([])
+
+  // Load user authentication status
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => setUser(data.user))
+      .catch(() => setUser(null))
+  }, [])
 
   // Toast notification functions
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
@@ -62,12 +75,12 @@ export default function BusinessModelCanvas() {
       if (user) {
         try {
           setIsLoading(true)
-          // Create or update user in database
-          await createOrUpdateUser({
-            id: user.id,
-            email: user.primaryEmail || '',
-            name: user.displayName || ''
-          })
+              // Create or update user in database
+              await createOrUpdateUser({
+                id: user.id,
+                email: user.email || '',
+                name: user.name || ''
+              })
           
           // Check if user has demo data in sessionStorage to migrate
           const demoData = sessionStorage.getItem('demo-canvas-data')

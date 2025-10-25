@@ -1,13 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Server-side rendering for Stack Auth integration
+  // Optimized for Vercel deployment
   images: {
     unoptimized: true
   },
-  // Ensure proper server-side rendering for authentication
-  serverExternalPackages: ['@neondatabase/serverless'],
-  // Disable static export for server-side rendering
-  output: undefined
+  // Database connection optimization
+  serverExternalPackages: ['@neondatabase/serverless']
 }
 
 module.exports = nextConfig
