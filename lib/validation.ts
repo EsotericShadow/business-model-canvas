@@ -1,6 +1,4 @@
 // Input validation and sanitization for production safety
-import DOMPurify from 'dompurify'
-import { JSDOM } from 'jsdom'
 
 // Security headers for production
 export const securityHeaders = {
@@ -24,24 +22,26 @@ export interface ValidationResult {
   sanitizedData: any
 }
 
-// Modern XSS protection using DOMPurify (2025 standard)
-const window = new JSDOM('').window
-const purify = DOMPurify(window as any)
-
-// Sanitize text input to prevent XSS
+// Simple but effective XSS protection (Edge Runtime compatible)
 export function sanitizeText(input: string): string {
   if (typeof input !== 'string') return ''
   
-  // Use DOMPurify for comprehensive XSS protection
-  const sanitized = purify.sanitize(input, {
-    ALLOWED_TAGS: [], // No HTML tags allowed
-    ALLOWED_ATTR: [], // No attributes allowed
-    KEEP_CONTENT: true, // Keep text content
-    RETURN_DOM: false,
-    RETURN_DOM_FRAGMENT: false
-  })
-  
-  return sanitized
+  // Comprehensive XSS protection without external dependencies
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+    .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+    .replace(/<link\b[^<]*(?:(?!<\/link>)<[^<]*)*<\/link>/gi, '')
+    .replace(/<meta\b[^<]*(?:(?!<\/meta>)<[^<]*)*<\/meta>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
     .trim()
     .substring(0, 10000) // Limit length to prevent DoS
 }
@@ -153,12 +153,8 @@ export function validateCanvasTitle(title: string): { isValid: boolean; sanitize
     return { isValid: false, sanitized: title.substring(0, 255) }
   }
   
-  // Sanitize title using DOMPurify
-  const sanitized = purify.sanitize(title, {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true
-  })
+  // Sanitize title using simple XSS protection
+  const sanitized = sanitizeText(title)
   
   return { isValid: true, sanitized }
 }

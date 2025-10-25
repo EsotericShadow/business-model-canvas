@@ -3,13 +3,14 @@ import { CanvasSection } from '@/components/CanvasSection'
 import Link from 'next/link'
 
 interface SharePageProps {
-  params: {
+  params: Promise<{
     token: string
-  }
+  }>
 }
 
 export default async function SharePage({ params }: SharePageProps) {
-  const canvas = await getCanvasByShareToken(params.token)
+  const { token } = await params
+  const canvas = await getCanvasByShareToken(token)
 
   if (!canvas) {
     return (
