@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserIdFromSession, getUserById } from '@/lib/auth'
+import { getUserIdFromSession, getUserById } from '@/lib/auth-database'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null })
     }
 
-    const user = getUserById(userId)
+    const user = await getUserById(userId)
     if (!user) {
       return NextResponse.json({ user: null })
     }

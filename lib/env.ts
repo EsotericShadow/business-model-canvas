@@ -2,27 +2,22 @@
 
 interface EnvConfig {
   DATABASE_URL: string
-  NEXT_PUBLIC_STACK_PROJECT_ID: string
-  NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: string
-  STACK_SECRET_SERVER_KEY: string
+  RESEND_API_KEY?: string
   NODE_ENV: 'development' | 'production' | 'test'
 }
 
 function validateEnv(): EnvConfig {
   const requiredVars = {
     DATABASE_URL: process.env.DATABASE_URL,
-    NEXT_PUBLIC_STACK_PROJECT_ID: process.env.NEXT_PUBLIC_STACK_PROJECT_ID,
-    NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY,
-    STACK_SECRET_SERVER_KEY: process.env.STACK_SECRET_SERVER_KEY,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
     NODE_ENV: process.env.NODE_ENV as 'development' | 'production' | 'test'
   }
 
   const missing: string[] = []
   
-  for (const [key, value] of Object.entries(requiredVars)) {
-    if (!value) {
-      missing.push(key)
-    }
+  // Only DATABASE_URL is required
+  if (!requiredVars.DATABASE_URL) {
+    missing.push('DATABASE_URL')
   }
 
   if (missing.length > 0) {
@@ -32,19 +27,6 @@ function validateEnv(): EnvConfig {
   // Validate DATABASE_URL format
   if (!requiredVars.DATABASE_URL!.startsWith('postgresql://')) {
     throw new Error('DATABASE_URL must be a valid PostgreSQL connection string')
-  }
-
-  // Validate Stack Auth keys format
-  if (!requiredVars.NEXT_PUBLIC_STACK_PROJECT_ID!.startsWith('p_')) {
-    throw new Error('NEXT_PUBLIC_STACK_PROJECT_ID must start with "p_"')
-  }
-
-  if (!requiredVars.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY!.startsWith('pck_')) {
-    throw new Error('NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY must start with "pck_"')
-  }
-
-  if (!requiredVars.STACK_SECRET_SERVER_KEY!.startsWith('ssk_')) {
-    throw new Error('STACK_SECRET_SERVER_KEY must start with "ssk_"')
   }
 
   return requiredVars as EnvConfig
@@ -87,7 +69,7 @@ export async function healthCheck(): Promise<{ status: string; checks: Record<st
 
     // Check auth configuration
     const envConfig = getEnv()
-    if (envConfig.NEXT_PUBLIC_STACK_PROJECT_ID && envConfig.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY) {
+    if (envConfig.DATABASE_URL) {
       checks.auth = true
     }
 

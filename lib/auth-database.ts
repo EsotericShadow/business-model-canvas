@@ -1,7 +1,8 @@
-// Enhanced authentication system with passwords and email verification
+// Database-backed authentication system
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { Resend } from 'resend'
+import { neon } from '@neondatabase/serverless'
 
 export interface User {
   id: string
@@ -14,9 +15,8 @@ export interface User {
   updated_at: Date
 }
 
-// Simple in-memory user store (replace with database in production)
-const users = new Map<string, User>()
-const sessions = new Map<string, string>() // sessionId -> userId
+// Database connection
+const sql = neon(process.env.DATABASE_URL!)
 
 // Password hashing
 export async function hashPassword(password: string): Promise<string> {
@@ -31,7 +31,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // User management
 export async function createUser(email: string, password: string, name?: string): Promise<User> {
   // Check if user already exists
-  const existingUser = getUserByEmail(email)
+  const existingUser = await getUserByEmail(email)
   if (existingUser) {
     throw new Error('User with this email already exists')
   }
@@ -45,6 +45,12 @@ export async function createUser(email: string, password: string, name?: string)
   const password_hash = await hashPassword(password)
   const verification_token = generateVerificationToken()
   
+  // Insert user into database
+  await sql`
+    INSERT INTO users (id, email, name, password_hash, email_verified, verification_token, created_at, updated_at)
+    VALUES (${id}, ${email.toLowerCase().trim()}, ${name?.trim() || null}, ${password_hash}, false, ${verification_token}, NOW(), NOW())
+  `
+  
   const user: User = {
     id,
     email: email.toLowerCase().trim(),
@@ -55,8 +61,6 @@ export async function createUser(email: string, password: string, name?: string)
     created_at: new Date(),
     updated_at: new Date()
   }
-  
-  users.set(id, user)
   
   // Send verification email
   try {
@@ -69,22 +73,63 @@ export async function createUser(email: string, password: string, name?: string)
   return user
 }
 
-export function getUserById(id: string): User | null {
-  return users.get(id) || null
+export async function getUserById(id: string): Promise<User | null> {
+  try {
+    const result = await sql`
+      SELECT id, email, name, password_hash, email_verified, verification_token, created_at, updated_at
+      FROM users 
+      WHERE id = ${id}
+    `
+    
+    if (result.length === 0) return null
+    
+    const row = result[0]
+    return {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      password_hash: row.password_hash,
+      email_verified: row.email_verified,
+      verification_token: row.verification_token,
+      created_at: new Date(row.created_at),
+      updated_at: new Date(row.updated_at)
+    }
+  } catch (error) {
+    console.error('Error getting user by ID:', error)
+    return null
+  }
 }
 
-export function getUserByEmail(email: string): User | null {
-  const userArray = Array.from(users.values())
-  for (let i = 0; i < userArray.length; i++) {
-    const user = userArray[i]
-    if (user.email.toLowerCase() === email.toLowerCase()) return user
+export async function getUserByEmail(email: string): Promise<User | null> {
+  try {
+    const result = await sql`
+      SELECT id, email, name, password_hash, email_verified, verification_token, created_at, updated_at
+      FROM users 
+      WHERE email = ${email.toLowerCase().trim()}
+    `
+    
+    if (result.length === 0) return null
+    
+    const row = result[0]
+    return {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      password_hash: row.password_hash,
+      email_verified: row.email_verified,
+      verification_token: row.verification_token,
+      created_at: new Date(row.created_at),
+      updated_at: new Date(row.updated_at)
+    }
+  } catch (error) {
+    console.error('Error getting user by email:', error)
+    return null
   }
-  return null
 }
 
 // Authentication
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
-  const user = getUserByEmail(email)
+  const user = await getUserByEmail(email)
   if (!user) return null
   
   const isValidPassword = await verifyPassword(password, user.password_hash)
@@ -93,7 +138,9 @@ export async function authenticateUser(email: string, password: string): Promise
   return user
 }
 
-// Session management
+// Session management (still in-memory for now, but could be moved to database)
+const sessions = new Map<string, string>() // sessionId -> userId
+
 export function createSession(userId: string): string {
   const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   sessions.set(sessionId, userId)
@@ -165,16 +212,23 @@ export async function sendVerificationEmail(email: string, token: string, name?:
   }
 }
 
-export function verifyEmailToken(userId: string, token: string): boolean {
-  const user = getUserById(userId)
-  if (!user || user.verification_token !== token) return false
-  
-  // Mark email as verified
-  user.email_verified = true
-  user.verification_token = undefined
-  user.updated_at = new Date()
-  
-  return true
+export async function verifyEmailToken(userId: string, token: string): Promise<boolean> {
+  try {
+    const user = await getUserById(userId)
+    if (!user || user.verification_token !== token) return false
+    
+    // Update user in database
+    await sql`
+      UPDATE users 
+      SET email_verified = true, verification_token = NULL, updated_at = NOW()
+      WHERE id = ${userId}
+    `
+    
+    return true
+  } catch (error) {
+    console.error('Error verifying email token:', error)
+    return false
+  }
 }
 
 // Password reset
@@ -183,13 +237,23 @@ export function generatePasswordResetToken(): string {
 }
 
 export async function resetPassword(userId: string, newPassword: string, resetToken: string): Promise<boolean> {
-  const user = getUserById(userId)
-  if (!user) return false
-  
-  // In a real app, you'd verify the reset token from a database
-  // For now, we'll just update the password
-  user.password_hash = await hashPassword(newPassword)
-  user.updated_at = new Date()
-  
-  return true
+  try {
+    const user = await getUserById(userId)
+    if (!user) return false
+    
+    // In a real app, you'd verify the reset token from a database
+    // For now, we'll just update the password
+    const newPasswordHash = await hashPassword(newPassword)
+    
+    await sql`
+      UPDATE users 
+      SET password_hash = ${newPasswordHash}, updated_at = NOW()
+      WHERE id = ${userId}
+    `
+    
+    return true
+  } catch (error) {
+    console.error('Error resetting password:', error)
+    return false
+  }
 }
