@@ -97,15 +97,15 @@ export async function exportToPDF(filename: string = 'business-model-canvas.pdf'
     // Get canvas data from the DOM
     const getCanvasData = () => {
       const sections = [
-        { key: 'keyPartners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
-        { key: 'keyActivities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
-        { key: 'keyResources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
-        { key: 'valuePropositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
-        { key: 'customerRelationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
+        { key: 'key-partners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
+        { key: 'key-activities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
+        { key: 'key-resources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
+        { key: 'value-propositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
+        { key: 'customer-relationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
         { key: 'channels', title: 'Channels', position: { x: 3, y: 1, width: 1, height: 1 } },
-        { key: 'customerSegments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
-        { key: 'costStructure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
-        { key: 'revenueStreams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
+        { key: 'customer-segments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
+        { key: 'cost-structure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
+        { key: 'revenue-streams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
       ]
       
       const data: Record<string, string> = {}
@@ -114,7 +114,23 @@ export async function exportToPDF(filename: string = 'business-model-canvas.pdf'
         if (element) {
           const textarea = element.querySelector('textarea') as HTMLTextAreaElement
           const readonly = element.querySelector('.canvas-content-readonly') as HTMLElement
-          data[section.key] = textarea?.value || readonly?.textContent || ''
+          const content = textarea?.value || readonly?.textContent || ''
+          
+          // Map CSS class names to database field names
+          const fieldMapping: Record<string, string> = {
+            'key-partners': 'key_partners',
+            'key-activities': 'key_activities', 
+            'key-resources': 'key_resources',
+            'value-propositions': 'value_propositions',
+            'customer-relationships': 'customer_relationships',
+            'channels': 'channels',
+            'customer-segments': 'customer_segments',
+            'cost-structure': 'cost_structure',
+            'revenue-streams': 'revenue_streams'
+          }
+          
+          const dbFieldName = fieldMapping[section.key] || section.key
+          data[dbFieldName] = content
         }
       })
       return { sections, data }
