@@ -379,8 +379,8 @@ body {
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
+/* Dark Mode Support - DISABLED FOR CONSISTENT LIGHT MODE */
+/* @media (prefers-color-scheme: dark) {
   .business-model-canvas {
     background: #1a1a1a;
     border-color: #333;
@@ -407,7 +407,7 @@ body {
     color: #fff;
     border-color: #555;
   }
-}
+} */
 
 /* Line Clamp Utility */
 .line-clamp-2 {
