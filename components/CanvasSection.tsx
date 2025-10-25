@@ -11,6 +11,22 @@ export function CanvasSection({ title, content, onUpdate, className }: CanvasSec
   const isReadOnly = className?.includes('read-only')
   const sectionId = `canvas-${title.toLowerCase().replace(/\s+/g, '-')}`
   
+  // Icons for each section matching the standard Business Model Canvas
+  const getIcon = (title: string) => {
+    switch (title) {
+      case 'Key Partners': return '🔗'
+      case 'Key Activities': return '✅'
+      case 'Value Propositions': return '🎁'
+      case 'Customer Relationships': return '❤️'
+      case 'Customer Segments': return '👥'
+      case 'Key Resources': return '🏭'
+      case 'Channels': return '🚚'
+      case 'Cost Structure': return '🧮'
+      case 'Revenue Streams': return '💰'
+      default: return '📝'
+    }
+  }
+  
   return (
     <div 
       className={`canvas-section ${className || ''}`}
@@ -23,7 +39,8 @@ export function CanvasSection({ title, content, onUpdate, className }: CanvasSec
         role="heading"
         aria-level={2}
       >
-        {title}
+        <span>{title}</span>
+        <span className="canvas-section-icon">{getIcon(title)}</span>
       </div>
       {isReadOnly ? (
         <div 
