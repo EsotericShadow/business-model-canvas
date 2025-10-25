@@ -212,51 +212,60 @@ export default function BusinessModelCanvas() {
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="business-model-canvas">
-          {/* Standard Business Model Canvas Order */}
+          {/* 5x3 Matrix Layout - Exact Match */}
           <CanvasSection
             title="Key Partners"
             content={canvasData.keyPartners}
             onUpdate={(value) => updateCanvasData('keyPartners', value)}
+            className="key-partners"
           />
           <CanvasSection
             title="Key Activities"
             content={canvasData.keyActivities}
             onUpdate={(value) => updateCanvasData('keyActivities', value)}
+            className="key-activities"
           />
           <CanvasSection
             title="Value Propositions"
             content={canvasData.valuePropositions}
             onUpdate={(value) => updateCanvasData('valuePropositions', value)}
+            className="value-propositions"
           />
           <CanvasSection
             title="Customer Relationships"
             content={canvasData.customerRelationships}
             onUpdate={(value) => updateCanvasData('customerRelationships', value)}
+            className="customer-relationships"
           />
           <CanvasSection
             title="Customer Segments"
             content={canvasData.customerSegments}
             onUpdate={(value) => updateCanvasData('customerSegments', value)}
+            className="customer-segments"
           />
           <CanvasSection
             title="Key Resources"
             content={canvasData.keyResources}
             onUpdate={(value) => updateCanvasData('keyResources', value)}
+            className="key-resources"
           />
           <CanvasSection
             title="Channels"
             content={canvasData.channels}
             onUpdate={(value) => updateCanvasData('channels', value)}
+            className="channels"
           />
           <CanvasSection
             title="Cost Structure"
             content={canvasData.costStructure}
             onUpdate={(value) => updateCanvasData('costStructure', value)}
+            className="cost-structure"
           />
           <CanvasSection
             title="Revenue Streams"
             content={canvasData.revenueStreams}
             onUpdate={(value) => updateCanvasData('revenueStreams', value)}
+            className="revenue-streams"
           />
         </div>
           </main>
