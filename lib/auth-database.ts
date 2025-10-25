@@ -2,7 +2,7 @@
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { Resend } from 'resend'
-import { neon } from '@neondatabase/serverless'
+import { sql } from './database'
 
 export interface User {
   id: string
@@ -14,9 +14,6 @@ export interface User {
   created_at: Date
   updated_at: Date
 }
-
-// Database connection
-const sql = neon(process.env.DATABASE_URL!)
 
 // Password hashing
 export async function hashPassword(password: string): Promise<string> {
@@ -30,47 +27,60 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 // User management
 export async function createUser(email: string, password: string, name?: string): Promise<User> {
-  // Check if user already exists
-  const existingUser = await getUserByEmail(email)
-  if (existingUser) {
-    throw new Error('User with this email already exists')
-  }
-
-  // Validate password strength
-  if (password.length < 8) {
-    throw new Error('Password must be at least 8 characters long')
-  }
-
-  const id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  const password_hash = await hashPassword(password)
-  const verification_token = generateVerificationToken()
-  
-  // Insert user into database
-  await sql`
-    INSERT INTO users (id, email, name, password_hash, email_verified, verification_token, created_at, updated_at)
-    VALUES (${id}, ${email.toLowerCase().trim()}, ${name?.trim() || null}, ${password_hash}, false, ${verification_token}, NOW(), NOW())
-  `
-  
-  const user: User = {
-    id,
-    email: email.toLowerCase().trim(),
-    name: name?.trim(),
-    password_hash,
-    email_verified: false,
-    verification_token,
-    created_at: new Date(),
-    updated_at: new Date()
-  }
-  
-  // Send verification email
   try {
-    await sendVerificationEmail(user.email, verification_token, user.name)
+    console.log('Creating user for email:', email)
+    
+    // Check if user already exists
+    const existingUser = await getUserByEmail(email)
+    if (existingUser) {
+      console.log('User already exists:', email)
+      throw new Error('User with this email already exists')
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      throw new Error('Password must be at least 8 characters long')
+    }
+
+    const id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const password_hash = await hashPassword(password)
+    const verification_token = generateVerificationToken()
+    
+    console.log('Inserting user into database:', id)
+    
+    // Insert user into database
+    await sql`
+      INSERT INTO users (id, email, name, password_hash, email_verified, verification_token, created_at, updated_at)
+      VALUES (${id}, ${email.toLowerCase().trim()}, ${name?.trim() || null}, ${password_hash}, false, ${verification_token}, NOW(), NOW())
+    `
+    
+    const user: User = {
+      id,
+      email: email.toLowerCase().trim(),
+      name: name?.trim(),
+      password_hash,
+      email_verified: false,
+      verification_token,
+      created_at: new Date(),
+      updated_at: new Date()
+    }
+    
+    console.log('User created successfully:', user.id)
+    
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.email, verification_token, user.name)
+      console.log('Verification email sent to:', user.email)
+    } catch (error) {
+      console.error('Failed to send verification email:', error)
+      // Don't throw here - user is created, just email failed
+    }
+    
+    return user
   } catch (error) {
-    console.error('Failed to send verification email:', error)
-    // Don't throw here - user is created, just email failed
+    console.error('Error in createUser:', error)
+    throw error
   }
-  
-  return user
 }
 
 export async function getUserById(id: string): Promise<User | null> {
@@ -129,13 +139,28 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
 // Authentication
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
-  const user = await getUserByEmail(email)
-  if (!user) return null
-  
-  const isValidPassword = await verifyPassword(password, user.password_hash)
-  if (!isValidPassword) return null
-  
-  return user
+  try {
+    console.log('Authenticating user:', email)
+    
+    const user = await getUserByEmail(email)
+    if (!user) {
+      console.log('User not found:', email)
+      return null
+    }
+    
+    console.log('User found, verifying password...')
+    const isValidPassword = await verifyPassword(password, user.password_hash)
+    if (!isValidPassword) {
+      console.log('Invalid password for user:', email)
+      return null
+    }
+    
+    console.log('Authentication successful for user:', user.id)
+    return user
+  } catch (error) {
+    console.error('Error in authenticateUser:', error)
+    return null
+  }
 }
 
 // Session management (still in-memory for now, but could be moved to database)
