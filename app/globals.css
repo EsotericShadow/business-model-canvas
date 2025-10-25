@@ -277,7 +277,7 @@ body {
   
   .canvas-section-subtitle {
     font-size: 12px;
-    color: #666;
+    color: #000;
     margin-bottom: 8px;
   }
   
@@ -321,7 +321,7 @@ body {
   .canvas-title {
     font-size: 20px;
     font-weight: 700;
-    color: #333;
+    color: #000;
   }
   
   .canvas-metadata {
@@ -343,7 +343,7 @@ body {
     padding: 16px;
     font-size: 12px;
     text-align: center;
-    background: #f8f9fa;
+    background: white;
     border-top: 1px solid #e0e0e0;
   }
 }
