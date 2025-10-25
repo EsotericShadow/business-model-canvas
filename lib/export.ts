@@ -60,34 +60,138 @@ export async function exportToPNG(filename: string = 'business-model-canvas.png'
   }
 }
 
-// Export to PDF
+// Export to PDF with proper text wrapping
 export async function exportToPDF(filename: string = 'business-model-canvas.pdf') {
   try {
-    const canvas = document.querySelector('.business-model-canvas') as HTMLElement
-    if (!canvas) throw new Error('Canvas not found')
-    
-    // Use html2canvas + jsPDF for PDF generation
-    const { default: html2canvas } = await import('html2canvas')
     const { default: jsPDF } = await import('jspdf')
     
-    const canvasElement = await html2canvas(canvas, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true,
-      allowTaint: true
-    })
-    
-    const imgData = canvasElement.toDataURL('image/png')
+    // Create PDF in landscape A4
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
       format: 'a4'
     })
     
-    const imgWidth = 297 // A4 landscape width
-    const imgHeight = (canvasElement.height * imgWidth) / canvasElement.width
+    // A4 landscape dimensions
+    const pageWidth = 297
+    const pageHeight = 210
+    const margin = 10
+    const contentWidth = pageWidth - (margin * 2)
+    const contentHeight = pageHeight - (margin * 2)
     
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
+    // Add title
+    pdf.setFontSize(16)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Business Model Canvas', pageWidth / 2, 15, { align: 'center' })
+    
+    // Add date
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(`Exported: ${new Date().toLocaleDateString()}`, pageWidth / 2, 22, { align: 'center' })
+    
+    // Define grid layout (5 columns, 3 rows)
+    const cellWidth = contentWidth / 5
+    const cellHeight = contentHeight / 3
+    const cellPadding = 2
+    
+    // Get canvas data from the DOM
+    const getCanvasData = () => {
+      const sections = [
+        { key: 'keyPartners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
+        { key: 'keyActivities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
+        { key: 'keyResources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
+        { key: 'valuePropositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
+        { key: 'customerRelationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
+        { key: 'channels', title: 'Channels', position: { x: 3, y: 1, width: 1, height: 1 } },
+        { key: 'customerSegments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
+        { key: 'costStructure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
+        { key: 'revenueStreams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
+      ]
+      
+      const data: Record<string, string> = {}
+      sections.forEach(section => {
+        const element = document.querySelector(`.${section.key}`) as HTMLElement
+        if (element) {
+          const textarea = element.querySelector('textarea') as HTMLTextAreaElement
+          const readonly = element.querySelector('.canvas-content-readonly') as HTMLElement
+          data[section.key] = textarea?.value || readonly?.textContent || ''
+        }
+      })
+      return { sections, data }
+    }
+    
+    const { sections, data } = getCanvasData()
+    
+    // Helper function to wrap text
+    const wrapText = (text: string, maxWidth: number, maxHeight: number, fontSize: number = 8) => {
+      if (!text.trim()) return []
+      
+      pdf.setFontSize(fontSize)
+      const words = text.split(' ')
+      const lines: string[] = []
+      let currentLine = ''
+      
+      for (const word of words) {
+        const testLine = currentLine + (currentLine ? ' ' : '') + word
+        const textWidth = pdf.getTextWidth(testLine)
+        
+        if (textWidth <= maxWidth) {
+          currentLine = testLine
+        } else {
+          if (currentLine) {
+            lines.push(currentLine)
+            currentLine = word
+          } else {
+            // Word is too long, split it
+            lines.push(word)
+          }
+        }
+      }
+      
+      if (currentLine) {
+        lines.push(currentLine)
+      }
+      
+      return lines.slice(0, Math.floor(maxHeight / (fontSize * 1.2)))
+    }
+    
+    // Draw grid and content
+    sections.forEach(section => {
+      const x = margin + (section.position.x * cellWidth)
+      const y = margin + 30 + (section.position.y * cellHeight) // 30mm offset for title
+      const width = section.position.width * cellWidth
+      const height = section.position.height * cellHeight
+      
+      // Draw border
+      pdf.setDrawColor(0, 0, 0)
+      pdf.setLineWidth(0.5)
+      pdf.rect(x, y, width, height)
+      
+      // Add title
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(section.title, x + cellPadding, y + 5)
+      
+      // Add content with text wrapping
+      const content = data[section.key] || ''
+      const textX = x + cellPadding
+      const textY = y + 8
+      const textWidth = width - (cellPadding * 2)
+      const textHeight = height - 10
+      
+      const lines = wrapText(content, textWidth, textHeight, 7)
+      
+      pdf.setFontSize(7)
+      pdf.setFont('helvetica', 'normal')
+      
+      lines.forEach((line, index) => {
+        const lineY = textY + (index * 4)
+        if (lineY < y + height - 2) {
+          pdf.text(line, textX, lineY)
+        }
+      })
+    })
+    
     pdf.save(filename)
   } catch (error) {
     console.error('Error exporting to PDF:', error)
