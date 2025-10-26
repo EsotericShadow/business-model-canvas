@@ -35,8 +35,12 @@ export function exportToJSON(data: CanvasExportData, filename: string = 'busines
 // Export to PNG
 export async function exportToPNG(filename: string = 'business-model-canvas.png') {
   try {
+    // Find the canvas container
     const canvas = document.querySelector('.business-model-canvas') as HTMLElement
-    if (!canvas) throw new Error('Canvas not found')
+    if (!canvas) {
+      console.error('Canvas element not found')
+      throw new Error('Canvas not found')
+    }
     
     // Use html2canvas for better rendering
     const { default: html2canvas } = await import('html2canvas')
@@ -45,12 +49,17 @@ export async function exportToPNG(filename: string = 'business-model-canvas.png'
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
-      allowTaint: true
+      allowTaint: true,
+      logging: false,
+      width: canvas.offsetWidth,
+      height: canvas.offsetHeight,
+      scrollX: 0,
+      scrollY: 0
     })
     
     const link = document.createElement('a')
     link.download = filename
-    link.href = canvasElement.toDataURL('image/png')
+    link.href = canvasElement.toDataURL('image/png', 1.0)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -61,7 +70,7 @@ export async function exportToPNG(filename: string = 'business-model-canvas.png'
 }
 
 // Export to PDF with proper text wrapping
-export async function exportToPDF(filename: string = 'business-model-canvas.pdf') {
+export async function exportToPDF(canvasData?: CanvasExportData, filename: string = 'business-model-canvas.pdf') {
   try {
     const { default: jsPDF } = await import('jspdf')
     
@@ -94,29 +103,47 @@ export async function exportToPDF(filename: string = 'business-model-canvas.pdf'
     const cellHeight = contentHeight / 3
     const cellPadding = 2
     
-    // Get canvas data from the DOM
-    const getCanvasData = () => {
-      const sections = [
-        { key: 'key-partners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
-        { key: 'key-activities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
-        { key: 'key-resources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
-        { key: 'value-propositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
-        { key: 'customer-relationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
-        { key: 'channels', title: 'Channels', position: { x: 3, y: 1, width: 1, height: 1 } },
-        { key: 'customer-segments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
-        { key: 'cost-structure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
-        { key: 'revenue-streams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
-      ]
-      
-      const data: Record<string, string> = {}
+    // Define sections layout
+    const sections = [
+      { key: 'key-partners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
+      { key: 'key-activities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
+      { key: 'key-resources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
+      { key: 'value-propositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
+      { key: 'customer-relationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
+      { key: 'channels', title: 'Channels', position: { x: 3, y: 1, width: 1, height: 1 } },
+      { key: 'customer-segments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
+      { key: 'cost-structure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
+      { key: 'revenue-streams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
+    ]
+    
+    // Use provided canvas data or fallback to DOM
+    let data: Record<string, string> = {}
+    
+    if (canvasData) {
+      // Use provided canvas data
+      data = {
+        key_partners: canvasData.keyPartners,
+        key_activities: canvasData.keyActivities,
+        key_resources: canvasData.keyResources,
+        value_propositions: canvasData.valuePropositions,
+        customer_relationships: canvasData.customerRelationships,
+        channels: canvasData.channels,
+        customer_segments: canvasData.customerSegments,
+        cost_structure: canvasData.costStructure,
+        revenue_streams: canvasData.revenueStreams
+      }
+    } else {
+      // Fallback to DOM extraction
       sections.forEach(section => {
-        const element = document.querySelector(`.${section.key}`) as HTMLElement
+        const element = document.querySelector(`#${section.key}`) || 
+                       document.querySelector(`.${section.key}`) ||
+                       document.querySelector(`[id="${section.key}"]`) as HTMLElement
+        
         if (element) {
           const textarea = element.querySelector('textarea') as HTMLTextAreaElement
           const readonly = element.querySelector('.canvas-content-readonly') as HTMLElement
           const content = textarea?.value || readonly?.textContent || ''
           
-          // Map CSS class names to database field names
           const fieldMapping: Record<string, string> = {
             'key-partners': 'key_partners',
             'key-activities': 'key_activities', 
@@ -133,10 +160,7 @@ export async function exportToPDF(filename: string = 'business-model-canvas.pdf'
           data[dbFieldName] = content
         }
       })
-      return { sections, data }
     }
-    
-    const { sections, data } = getCanvasData()
     
     // Helper function to wrap text
     const wrapText = (text: string, maxWidth: number, maxHeight: number, fontSize: number = 8) => {
