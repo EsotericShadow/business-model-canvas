@@ -1,4 +1,5 @@
 // Export utilities for Business Model Canvas
+import html2canvas from 'html2canvas'
 
 export interface CanvasExportData {
   keyPartners: string
@@ -154,60 +155,34 @@ async function generatePDFBlob(canvasData: CanvasExportData): Promise<Blob> {
   return pdf.output('blob')
 }
 
-// Export to PNG using PDF-to-canvas conversion
+// Export to PNG using html2canvas
 export async function exportToPNG(canvasData: CanvasExportData, filename: string = 'business-model-canvas.png') {
   try {
-    // Step 1: Generate PDF as blob
-    const pdfBlob = await generatePDFBlob(canvasData)
-    
-    // Step 2: Load PDF with pdfjs
-    const pdfjsLib = await import('pdfjs-dist')
-    
-    // Set worker path for pdfjs
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-    
-    // Step 3: Convert blob to ArrayBuffer
-    const arrayBuffer = await pdfBlob.arrayBuffer()
-    
-    // Step 4: Load PDF document
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
-    const pdfDocument = await loadingTask.promise
-    
-    // Step 5: Get first page
-    const page = await pdfDocument.getPage(1)
-    
-    // Step 6: Create canvas for rendering
-    const viewport = page.getViewport({ scale: 2.0 })
-    const canvas = document.createElement('canvas')
-    const context = canvas.getContext('2d')
-    
-    if (!context) {
-      throw new Error('Could not get canvas context')
+    const canvas = document.querySelector('.business-model-canvas') as HTMLElement
+    if (!canvas) {
+      console.error('Canvas element not found')
+      throw new Error('Canvas not found')
     }
     
-    canvas.width = viewport.width
-    canvas.height = viewport.height
+    // Use html2canvas for reliable rendering
+    const canvasElement = await html2canvas(canvas, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      width: canvas.offsetWidth,
+      height: canvas.offsetHeight,
+      scrollX: 0,
+      scrollY: 0
+    })
     
-    // Step 7: Render PDF page to canvas
-    await page.render({
-      canvasContext: context,
-      viewport: viewport,
-      canvas: canvas
-    }).promise
-    
-    // Step 8: Convert canvas to PNG and download
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.download = filename
-        link.href = url
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      }
-    }, 'image/png', 1.0)
+    const link = document.createElement('a')
+    link.download = filename
+    link.href = canvasElement.toDataURL('image/png', 1.0)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
     
   } catch (error) {
     console.error('Error exporting to PNG:', error)
