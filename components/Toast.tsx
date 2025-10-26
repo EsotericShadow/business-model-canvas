@@ -51,12 +51,17 @@ export function Toast({ message, type, duration = 5000, onClose }: ToastProps) {
   )
 }
 
-// Toast context for global usage
+// Toast context for global usage - only create on client side
 interface ToastContextType {
   showToast: (message: string, type: ToastProps['type']) => void
 }
 
-export const ToastContext = React.createContext<ToastContextType | null>(null)
+let ToastContext: React.Context<ToastContextType | null> | null = null
+
+// Only create context on client side to avoid SSR issues
+if (typeof window !== 'undefined') {
+  ToastContext = React.createContext<ToastContextType | null>(null)
+}
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Array<ToastProps & { id: string }>>([])
@@ -68,6 +73,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
+  }
+
+  // Don't render context provider during SSR
+  if (!ToastContext) {
+    return <>{children}</>
   }
 
   return (
