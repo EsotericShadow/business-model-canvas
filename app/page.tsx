@@ -8,7 +8,7 @@ import { AuthButton } from '@/components/AuthButton'
 import { ExportMenu } from '@/components/ExportMenu'
 import { VersionHistory } from '@/components/VersionHistory'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Toast } from '@/components/Toast'
+// import { Toast } from '@/components/Toast'
 import { MobileNavigation } from '@/components/MobileNavigation'
 import { MobileCanvasOverview } from '@/components/MobileCanvasOverview'
 import { getUserCanvas, saveCanvas, createOrUpdateUser, CanvasData } from '@/lib/actions'
@@ -48,7 +48,7 @@ export default function BusinessModelCanvas() {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [currentCanvasId, setCurrentCanvasId] = useState<string | null>(null)
-  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([])
+  // const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }>>([])
   const [currentSection, setCurrentSection] = useState<string>('')
 
   // Mobile navigation sections
@@ -85,18 +85,18 @@ export default function BusinessModelCanvas() {
       .catch(() => setUser(null))
   }, [])
 
-  // Toast notification functions
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
-    const id = Math.random().toString(36).substr(2, 9)
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(toast => toast.id !== id))
-    }, 5000)
-  }, [])
+  // Toast notification functions - temporarily disabled for build
+  // const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+  //   const id = Math.random().toString(36).substr(2, 9)
+  //   setToasts(prev => [...prev, { id, message, type }])
+  //   setTimeout(() => {
+  //     setToasts(prev => prev.filter(toast => toast.id !== id))
+  //   }, 5000)
+  // }, [])
 
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
-  }
+  // const removeToast = (id: string) => {
+  //   setToasts(prev => prev.filter(toast => toast.id !== id))
+  // }
 
   // Load canvas data when user changes
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function BusinessModelCanvas() {
                 })
                 // Clear demo data from sessionStorage
                 sessionStorage.removeItem('demo-canvas-data')
-                showToast('Your demo canvas has been saved to your account!', 'success')
+                // showToast('Your demo canvas has been saved to your account!', 'success')
               }
             } catch (error) {
               console.error('Error migrating demo data:', error)
@@ -158,7 +158,7 @@ export default function BusinessModelCanvas() {
           }
         } catch (error) {
           console.error('Error loading canvas:', error)
-          showToast('Failed to load canvas. Please try again.', 'error')
+          // showToast('Failed to load canvas. Please try again.', 'error')
         } finally {
           setIsLoading(false)
         }
@@ -192,7 +192,7 @@ export default function BusinessModelCanvas() {
           }
         } catch (error) {
           console.error('Error loading demo canvas:', error)
-          showToast('Failed to load demo canvas. Please try again.', 'error')
+          // showToast('Failed to load demo canvas. Please try again.', 'error')
         } finally {
           setIsLoading(false)
         }
@@ -200,7 +200,7 @@ export default function BusinessModelCanvas() {
     }
 
     loadCanvas()
-  }, [user, showToast])
+  }, [user])
 
   // Auto-save with debouncing
   const debouncedSave = useCallback(
@@ -231,10 +231,10 @@ export default function BusinessModelCanvas() {
             revenue_streams: data.revenueStreams
           })
           setLastSaved(new Date())
-          showToast('Canvas saved successfully!', 'success')
+              // showToast('Canvas saved successfully!', 'success')
         } catch (error) {
           console.error('Error saving canvas:', error)
-          showToast('Failed to save canvas. Please try again.', 'error')
+          // showToast('Failed to save canvas. Please try again.', 'error')
         } finally {
           setIsSaving(false)
         }
@@ -242,7 +242,7 @@ export default function BusinessModelCanvas() {
       
       return () => clearTimeout(timeoutId)
     },
-    [user, showToast]
+    [user]
   )
 
   const updateCanvasData = (section: keyof CanvasDataState, value: string) => {
@@ -398,15 +398,15 @@ export default function BusinessModelCanvas() {
             </div>
           </footer>
 
-          {/* Toast Notifications */}
-          {toasts.map(toast => (
+          {/* Toast Notifications - temporarily disabled for build */}
+          {/* {toasts.map(toast => (
             <Toast
               key={toast.id}
               message={toast.message}
               type={toast.type}
               onClose={() => removeToast(toast.id)}
             />
-          ))}
+          ))} */}
         </div>
       )
     }
