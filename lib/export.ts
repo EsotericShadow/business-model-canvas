@@ -32,37 +32,183 @@ export function exportToJSON(data: CanvasExportData, filename: string = 'busines
   URL.revokeObjectURL(url)
 }
 
-// Export to PNG
-export async function exportToPNG(filename: string = 'business-model-canvas.png') {
-  try {
-    // Find the canvas container
-    const canvas = document.querySelector('.business-model-canvas') as HTMLElement
-    if (!canvas) {
-      console.error('Canvas element not found')
-      throw new Error('Canvas not found')
+// Generate PDF as Blob for PNG conversion
+async function generatePDFBlob(canvasData: CanvasExportData): Promise<Blob> {
+  const { default: jsPDF } = await import('jspdf')
+  
+  // Create PDF in landscape A4
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  })
+  
+  // A4 landscape dimensions
+  const pageWidth = 297
+  const pageHeight = 210
+  const margin = 10
+  const contentWidth = pageWidth - (margin * 2)
+  const contentHeight = pageHeight - (margin * 2)
+  
+  // Add title
+  pdf.setFontSize(16)
+  pdf.setFont('helvetica', 'bold')
+  pdf.text('Business Model Canvas', pageWidth / 2, 15, { align: 'center' })
+  
+  // Add date
+  pdf.setFontSize(10)
+  pdf.setFont('helvetica', 'normal')
+  pdf.text(`Exported: ${new Date().toLocaleDateString()}`, pageWidth / 2, 22, { align: 'center' })
+  
+  // Define grid layout (5 columns, 3 rows)
+  const cellWidth = contentWidth / 5
+  const cellHeight = contentHeight / 3
+  const cellPadding = 2
+  
+  // Define sections layout with correct data keys
+  const sections = [
+    { key: 'keyPartners', dataKey: 'keyPartners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
+    { key: 'keyActivities', dataKey: 'keyActivities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
+    { key: 'keyResources', dataKey: 'keyResources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
+    { key: 'valuePropositions', dataKey: 'valuePropositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
+    { key: 'customerRelationships', dataKey: 'customerRelationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
+    { key: 'channels', dataKey: 'channels', title: 'Channels', position: { x: 3, y: 1, width: 1, height: 1 } },
+    { key: 'customerSegments', dataKey: 'customerSegments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
+    { key: 'costStructure', dataKey: 'costStructure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
+    { key: 'revenueStreams', dataKey: 'revenueStreams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
+  ]
+  
+  // Adaptive text rendering function
+  const renderTextWithAdaptiveSize = (
+    text: string, 
+    x: number, 
+    y: number, 
+    maxWidth: number, 
+    maxHeight: number, 
+    startFontSize: number = 8
+  ) => {
+    if (!text.trim()) return
+    
+    let fontSize = startFontSize
+    let lines: string[] = []
+    const minFontSize = 5 // Minimum readable font size
+    const lineHeightFactor = 0.35 // mm per point
+    
+    // Iterate to find optimal font size
+    while (fontSize >= minFontSize) {
+      pdf.setFontSize(fontSize)
+      
+      // Use jsPDF's built-in text wrapping
+      const wrappedText = pdf.splitTextToSize(text, maxWidth)
+      const textHeight = wrappedText.length * (fontSize * lineHeightFactor * 1.2)
+      
+      if (textHeight <= maxHeight) {
+        lines = wrappedText
+        break
+      }
+      
+      fontSize -= 0.5
     }
     
-    // Use html2canvas for better rendering
-    const { default: html2canvas } = await import('html2canvas')
+    // Render the text
+    if (lines.length > 0) {
+      pdf.setFontSize(fontSize)
+      pdf.setFont('helvetica', 'normal')
+      
+      lines.forEach((line, index) => {
+        const lineY = y + (index * fontSize * lineHeightFactor * 1.2)
+        if (lineY < y + maxHeight - 2) {
+          pdf.text(line, x, lineY)
+        }
+      })
+    }
+  }
+  
+  // Draw grid and content
+  sections.forEach(section => {
+    const x = margin + (section.position.x * cellWidth)
+    const y = margin + 30 + (section.position.y * cellHeight) // 30mm offset for title
+    const width = section.position.width * cellWidth
+    const height = section.position.height * cellHeight
     
-    const canvasElement = await html2canvas(canvas, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: canvas.offsetWidth,
-      height: canvas.offsetHeight,
-      scrollX: 0,
-      scrollY: 0
-    })
+    // Draw border
+    pdf.setDrawColor(0, 0, 0)
+    pdf.setLineWidth(0.5)
+    pdf.rect(x, y, width, height)
     
-    const link = document.createElement('a')
-    link.download = filename
-    link.href = canvasElement.toDataURL('image/png', 1.0)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    // Add title
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(section.title, x + cellPadding, y + 5)
+    
+    // Add content with adaptive text sizing
+    const content = canvasData[section.dataKey as keyof CanvasExportData] || ''
+    const textX = x + cellPadding
+    const textY = y + 8
+    const textWidth = width - (cellPadding * 2)
+    const textHeight = height - 12 // Reserve space for title
+    
+    renderTextWithAdaptiveSize(content, textX, textY, textWidth, textHeight, 8)
+  })
+  
+  return pdf.output('blob')
+}
+
+// Export to PNG using PDF-to-canvas conversion
+export async function exportToPNG(canvasData: CanvasExportData, filename: string = 'business-model-canvas.png') {
+  try {
+    // Step 1: Generate PDF as blob
+    const pdfBlob = await generatePDFBlob(canvasData)
+    
+    // Step 2: Load PDF with pdfjs
+    const pdfjsLib = await import('pdfjs-dist')
+    
+    // Set worker path for pdfjs
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+    
+    // Step 3: Convert blob to ArrayBuffer
+    const arrayBuffer = await pdfBlob.arrayBuffer()
+    
+    // Step 4: Load PDF document
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+    const pdfDocument = await loadingTask.promise
+    
+    // Step 5: Get first page
+    const page = await pdfDocument.getPage(1)
+    
+    // Step 6: Create canvas for rendering
+    const viewport = page.getViewport({ scale: 2.0 })
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    
+    if (!context) {
+      throw new Error('Could not get canvas context')
+    }
+    
+    canvas.width = viewport.width
+    canvas.height = viewport.height
+    
+    // Step 7: Render PDF page to canvas
+    await page.render({
+      canvasContext: context,
+      viewport: viewport,
+      canvas: canvas
+    }).promise
+    
+    // Step 8: Convert canvas to PNG and download
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.download = filename
+        link.href = url
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      }
+    }, 'image/png', 1.0)
+    
   } catch (error) {
     console.error('Error exporting to PNG:', error)
     throw error
@@ -72,167 +218,21 @@ export async function exportToPNG(filename: string = 'business-model-canvas.png'
 // Export to PDF with proper text wrapping
 export async function exportToPDF(canvasData?: CanvasExportData, filename: string = 'business-model-canvas.pdf') {
   try {
-    const { default: jsPDF } = await import('jspdf')
-    
-    // Create PDF in landscape A4
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4'
-    })
-    
-    // A4 landscape dimensions
-    const pageWidth = 297
-    const pageHeight = 210
-    const margin = 10
-    const contentWidth = pageWidth - (margin * 2)
-    const contentHeight = pageHeight - (margin * 2)
-    
-    // Add title
-    pdf.setFontSize(16)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Business Model Canvas', pageWidth / 2, 15, { align: 'center' })
-    
-    // Add date
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'normal')
-    pdf.text(`Exported: ${new Date().toLocaleDateString()}`, pageWidth / 2, 22, { align: 'center' })
-    
-    // Define grid layout (5 columns, 3 rows)
-    const cellWidth = contentWidth / 5
-    const cellHeight = contentHeight / 3
-    const cellPadding = 2
-    
-    // Define sections layout
-    const sections = [
-      { key: 'key-partners', title: 'Key Partners', position: { x: 0, y: 0, width: 1, height: 2 } },
-      { key: 'key-activities', title: 'Key Activities', position: { x: 1, y: 0, width: 1, height: 1 } },
-      { key: 'key-resources', title: 'Key Resources', position: { x: 1, y: 1, width: 1, height: 1 } },
-      { key: 'value-propositions', title: 'Value Propositions', position: { x: 2, y: 0, width: 1, height: 2 } },
-      { key: 'customer-relationships', title: 'Customer Relationships', position: { x: 3, y: 0, width: 1, height: 1 } },
-      { key: 'channels', title: 'Channels', position: { x: 3, y: 1, width: 1, height: 1 } },
-      { key: 'customer-segments', title: 'Customer Segments', position: { x: 4, y: 0, width: 1, height: 2 } },
-      { key: 'cost-structure', title: 'Cost Structure', position: { x: 0, y: 2, width: 2, height: 1 } },
-      { key: 'revenue-streams', title: 'Revenue Streams', position: { x: 2, y: 2, width: 3, height: 1 } }
-    ]
-    
-    // Use provided canvas data or fallback to DOM
-    let data: Record<string, string> = {}
-    
-    if (canvasData) {
-      // Use provided canvas data
-      data = {
-        key_partners: canvasData.keyPartners,
-        key_activities: canvasData.keyActivities,
-        key_resources: canvasData.keyResources,
-        value_propositions: canvasData.valuePropositions,
-        customer_relationships: canvasData.customerRelationships,
-        channels: canvasData.channels,
-        customer_segments: canvasData.customerSegments,
-        cost_structure: canvasData.costStructure,
-        revenue_streams: canvasData.revenueStreams
-      }
-    } else {
-      // Fallback to DOM extraction
-      sections.forEach(section => {
-        const element = document.querySelector(`#${section.key}`) || 
-                       document.querySelector(`.${section.key}`) ||
-                       document.querySelector(`[id="${section.key}"]`) as HTMLElement
-        
-        if (element) {
-          const textarea = element.querySelector('textarea') as HTMLTextAreaElement
-          const readonly = element.querySelector('.canvas-content-readonly') as HTMLElement
-          const content = textarea?.value || readonly?.textContent || ''
-          
-          const fieldMapping: Record<string, string> = {
-            'key-partners': 'key_partners',
-            'key-activities': 'key_activities', 
-            'key-resources': 'key_resources',
-            'value-propositions': 'value_propositions',
-            'customer-relationships': 'customer_relationships',
-            'channels': 'channels',
-            'customer-segments': 'customer_segments',
-            'cost-structure': 'cost_structure',
-            'revenue-streams': 'revenue_streams'
-          }
-          
-          const dbFieldName = fieldMapping[section.key] || section.key
-          data[dbFieldName] = content
-        }
-      })
+    if (!canvasData) {
+      throw new Error('Canvas data is required for PDF export')
     }
     
-    // Helper function to wrap text
-    const wrapText = (text: string, maxWidth: number, maxHeight: number, fontSize: number = 8) => {
-      if (!text.trim()) return []
-      
-      pdf.setFontSize(fontSize)
-      const words = text.split(' ')
-      const lines: string[] = []
-      let currentLine = ''
-      
-      for (const word of words) {
-        const testLine = currentLine + (currentLine ? ' ' : '') + word
-        const textWidth = pdf.getTextWidth(testLine)
-        
-        if (textWidth <= maxWidth) {
-          currentLine = testLine
-        } else {
-          if (currentLine) {
-            lines.push(currentLine)
-            currentLine = word
-          } else {
-            // Word is too long, split it
-            lines.push(word)
-          }
-        }
-      }
-      
-      if (currentLine) {
-        lines.push(currentLine)
-      }
-      
-      return lines.slice(0, Math.floor(maxHeight / (fontSize * 1.2)))
-    }
+    const pdfBlob = await generatePDFBlob(canvasData)
     
-    // Draw grid and content
-    sections.forEach(section => {
-      const x = margin + (section.position.x * cellWidth)
-      const y = margin + 30 + (section.position.y * cellHeight) // 30mm offset for title
-      const width = section.position.width * cellWidth
-      const height = section.position.height * cellHeight
-      
-      // Draw border
-      pdf.setDrawColor(0, 0, 0)
-      pdf.setLineWidth(0.5)
-      pdf.rect(x, y, width, height)
-      
-      // Add title
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text(section.title, x + cellPadding, y + 5)
-      
-      // Add content with text wrapping
-      const content = data[section.key] || ''
-      const textX = x + cellPadding
-      const textY = y + 8
-      const textWidth = width - (cellPadding * 2)
-      const textHeight = height - 10
-      
-      const lines = wrapText(content, textWidth, textHeight, 7)
-      
-      pdf.setFontSize(7)
-      pdf.setFont('helvetica', 'normal')
-      
-      lines.forEach((line, index) => {
-        const lineY = textY + (index * 4)
-        if (lineY < y + height - 2) {
-          pdf.text(line, textX, lineY)
-        }
-      })
-    })
-    
-    pdf.save(filename)
+    // Convert blob to URL and trigger download
+    const url = URL.createObjectURL(pdfBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   } catch (error) {
     console.error('Error exporting to PDF:', error)
     throw error
