@@ -61,7 +61,7 @@ export function ExportMenu({ canvasData }: ExportMenuProps) {
       return
     }
     try {
-      await exportToPDF()
+      await exportToPDF(canvasData)
     } catch (error) {
       console.error('Export failed:', error)
       alert('Export failed. Please try again.')
