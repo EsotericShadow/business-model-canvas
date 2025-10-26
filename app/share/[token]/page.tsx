@@ -3,7 +3,6 @@ import { CanvasSection } from '@/components/CanvasSection'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 interface SharePageProps {
   params: Promise<{
