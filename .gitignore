@@ -83,3 +83,11 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Local credentials and backups
+.env*
+*.env
+*.env.*
+!*.env.example
+!.env.example
+!env.example
